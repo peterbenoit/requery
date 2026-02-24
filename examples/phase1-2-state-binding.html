@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>reQuery — Phase 1 + 2: State & Binding</title>
+	<style>
+		body {
+			font-family: system-ui, sans-serif;
+			max-width: 600px;
+			margin: 2rem auto;
+			padding: 0 1rem;
+		}
+
+		h2 {
+			border-bottom: 1px solid #ddd;
+			padding-bottom: 0.5rem;
+		}
+
+		.card {
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			padding: 1rem;
+			margin-bottom: 1.5rem;
+		}
+
+		button {
+			padding: 0.4rem 0.8rem;
+			margin: 0.25rem;
+			cursor: pointer;
+		}
+
+		input,
+		textarea {
+			padding: 0.4rem;
+			width: 100%;
+			box-sizing: border-box;
+			margin-top: 0.25rem;
+		}
+
+		.badge {
+			display: inline-block;
+			background: #0077cc;
+			color: white;
+			border-radius: 4px;
+			padding: 0.2rem 0.6rem;
+		}
+
+		.hidden-label {
+			color: #999;
+			font-style: italic;
+		}
+
+		.highlight {
+			background: #fffbcc;
+		}
+	</style>
+</head>
+
+<body>
+
+	<h1>reQuery Examples</h1>
+	<p>Phases 1 &amp; 2: State Core + DOM Binding. No build step.</p>
+
+	<!-- =====================================================================
+       Example 1: Counter
+       Demonstrates rqState, rqSet, rqMutate, data-rq-text
+  ===================================================================== -->
+	<div class="card" id="counter-demo">
+		<h2>Counter</h2>
+		<p>Count: <strong data-rq-text="count">0</strong></p>
+		<button id="dec">−</button>
+		<button id="inc">+</button>
+		<button id="reset">Reset</button>
+	</div>
+
+	<!-- =====================================================================
+       Example 2: Live Input Binding (two-way)
+       Demonstrates data-rq-val, data-rq-text
+  ===================================================================== -->
+	<div class="card" id="input-demo">
+		<h2>Live Input</h2>
+		<label>
+			Your name:
+			<input type="text" data-rq-val="username" placeholder="Type here…" />
+		</label>
+		<p>Hello, <strong data-rq-text="username">stranger</strong>!</p>
+	</div>
+
+	<!-- =====================================================================
+       Example 3: Show / Hide + Class Toggle
+       Demonstrates data-rq-show, data-rq-class-*
+  ===================================================================== -->
+	<div class="card" id="visibility-demo">
+		<h2>Show / Hide &amp; Classes</h2>
+		<button id="toggle-visible">Toggle message</button>
+		<button id="toggle-highlight">Toggle highlight</button>
+		<p data-rq-show="visible" data-rq-class-highlight="highlighted">
+			This message can be shown, hidden, or highlighted.
+		</p>
+		<p class="hidden-label" data-rq-show="hidden">Message is currently hidden.</p>
+	</div>
+
+	<!-- =====================================================================
+       Example 4: Attribute Binding
+       Demonstrates data-rq-attr-href, data-rq-attr-src
+  ===================================================================== -->
+	<div class="card" id="attr-demo">
+		<h2>Attribute Binding</h2>
+		<label>
+			URL:
+			<input type="text" data-rq-val="linkUrl" placeholder="https://…" />
+		</label>
+		<p><a data-rq-attr-href="linkUrl" target="_blank" data-rq-text="linkUrl">—</a></p>
+	</div>
+
+	<!-- =====================================================================
+       Example 5: Computed + Watch
+       Demonstrates rqComputed, rqWatch
+  ===================================================================== -->
+	<div class="card" id="computed-demo">
+		<h2>Computed &amp; Watch</h2>
+		<label>
+			Price: <input type="number" data-rq-val="price" value="10" min="0" />
+		</label>
+		<label>
+			Qty: <input type="number" data-rq-val="qty" value="1" min="0" />
+		</label>
+		<p>Total: <span class="badge" data-rq-text="total">—</span></p>
+		<p id="watch-log" style="color:#666; font-size:0.85rem;"></p>
+	</div>
+
+
+	<!-- jQuery 4 from CDN -->
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<!-- reQuery UMD build (run `npm run build` first) -->
+	<script src="../dist/requery.umd.js"></script>
+
+	<script>
+		// -------------------------------------------------------------------
+		// Example 1: Counter
+		// -------------------------------------------------------------------
+		$('#counter-demo').rqState({ count: 0 });
+
+		$('#inc').on('click', () => {
+			$('#counter-demo').rqMutate('count', n => n + 1);
+		});
+		$('#dec').on('click', () => {
+			$('#counter-demo').rqMutate('count', n => n - 1);
+		});
+		$('#reset').on('click', () => {
+			$('#counter-demo').rqSet('count', 0);
+		});
+
+		// -------------------------------------------------------------------
+		// Example 2: Live Input
+		// -------------------------------------------------------------------
+		$('#input-demo').rqState({ username: '' });
+
+		// -------------------------------------------------------------------
+		// Example 3: Visibility + Classes
+		// -------------------------------------------------------------------
+		$('#visibility-demo').rqState({ visible: true, highlighted: false });
+
+		// Derived: hidden = !visible
+		$('#visibility-demo').rqComputed('hidden', data => !data.visible);
+
+		$('#toggle-visible').on('click', () => {
+			$('#visibility-demo').rqMutate('visible', v => !v);
+			// Re-evaluate computed
+			const hidden = !$('#visibility-demo').rqGet('visible');
+			$('#visibility-demo').rqSet('hidden', hidden);
+		});
+		$('#toggle-highlight').on('click', () => {
+			$('#visibility-demo').rqMutate('highlighted', v => !v);
+		});
+
+		// -------------------------------------------------------------------
+		// Example 4: Attribute Binding
+		// -------------------------------------------------------------------
+		$('#attr-demo').rqState({ linkUrl: 'https://jquery.com' });
+
+		// -------------------------------------------------------------------
+		// Example 5: Computed Total + Watch
+		// -------------------------------------------------------------------
+		$('#computed-demo')
+			.rqState({ price: 10, qty: 1, total: '' })
+			.rqWatch('price', recalcTotal)
+			.rqWatch('qty', recalcTotal);
+
+		function recalcTotal() {
+			const price = $('#computed-demo').rqGet('price');
+			const qty = $('#computed-demo').rqGet('qty');
+			const total = (parseFloat(price) || 0) * (parseInt(qty, 10) || 0);
+			$('#computed-demo').rqSet('total', '$' + total.toFixed(2));
+		}
+
+		// Fire once on load to populate total
+		recalcTotal();
+
+		// Watch log
+		$('#computed-demo').rqWatch('total', (newVal) => {
+			$('#watch-log').text('Watch fired → total is now ' + newVal);
+		});
+	</script>
+</body>
+
+</html>

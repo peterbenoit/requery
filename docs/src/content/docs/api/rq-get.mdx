@@ -1,0 +1,71 @@
+---
+title: rqGet()
+description: Read a state value from the first matched element.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Signature
+
+```ts
+$.fn.rqGet(key: string): any
+```
+
+<Aside type="caution" title="Not chainable">
+  `rqGet()` returns the **value**, not `this`. You cannot chain after it.
+</Aside>
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `key` | `string` | Yes | The state key to read |
+
+## Description
+
+Reads a state value from the **first matched element** in the jQuery set. If the element has no state record, returns `undefined`.
+
+If `key` is a computed key (registered via `rqComputed`), the compute function is called and its return value is returned. The result is **not cached** — the function runs on every `rqGet` call.
+
+## Examples
+
+### Read a plain value
+
+```js
+$('#app').rqState({ count: 5 });
+
+$('#app').rqGet('count'); // 5
+```
+
+### Read a computed value
+
+```js
+$('#app')
+  .rqState({ price: 10, qty: 3 })
+  .rqComputed('total', ({ price, qty }) => price * qty);
+
+$('#app').rqGet('total'); // 30
+```
+
+Each `rqGet('total')` call invokes the compute function — there is no caching.
+
+### Read then use
+
+```js
+const count = $('#app').rqGet('count');
+if (count > 10) {
+  $('#app').rqSet('status', 'high');
+}
+```
+
+### Does not work on empty sets
+
+```js
+$('#nonexistent').rqGet('count'); // undefined
+```
+
+## Notes
+
+- Only operates on the **first element** in the matched set (same as `$.fn.val()`, `$.fn.text()`, etc.).
+- Returns `undefined` if the element has no state, not an error.
+- Computed values are lazily evaluated — see [Reactivity Model](/concepts/reactivity-model/) for the implications.

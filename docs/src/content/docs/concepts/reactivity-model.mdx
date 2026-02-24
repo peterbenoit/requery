@@ -1,0 +1,94 @@
+---
+title: Reactivity Model
+description: How rqWatch and rqComputed work, and their known limitations.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Watchers
+
+`rqWatch(key, fn)` registers a callback that fires whenever `key` changes. Multiple watchers on the same key are all called, in registration order.
+
+```js
+$('#app')
+  .rqState({ price: 10, qty: 2 })
+  .rqWatch('price', (newPrice, oldPrice) => {
+    console.log(`Price changed: ${oldPrice} → ${newPrice}`);
+  });
+```
+
+**Watchers are synchronous** — they run as part of the `rqSet` call, before the function returns.
+
+Watchers receive `(newValue, oldValue)` and have no return value. They are for **side effects** — logging, analytics, cross-key updates, etc.
+
+## Computed values
+
+`rqComputed(key, fn)` defines a derived value. The function receives the entire state object and returns the computed result.
+
+```js
+$('#app')
+  .rqState({ price: 10, qty: 2 })
+  .rqComputed('total', ({ price, qty }) => price * qty);
+
+$('#app').rqGet('total'); // 20
+```
+
+### Laziness — the important gotcha
+
+`rqComputed` is **lazy**. The function only runs when you call `rqGet(key)`. It is **not** automatically re-evaluated and pushed to `data-rq-*` bindings when its dependencies change.
+
+This is by design — reQuery does not track reactive dependencies like Vue's `computed()` or MobX. If you need a computed value to update a `data-rq-text` binding automatically, you must call `rqSet` explicitly after updating its dependencies:
+
+```js
+function recalcTotal() {
+  const total = $('#app').rqGet('total'); // calls the computed fn
+  $('#app').rqSet('total', total);        // pushes result to bindings
+}
+
+$('#app').rqWatch('price', recalcTotal);
+$('#app').rqWatch('qty', recalcTotal);
+```
+
+<Aside type="caution">
+  This is the most common confusion point. `rqComputed` stores a function in the state record — it does not create an auto-updating reactive dependency graph. You are responsible for deciding when to recalculate and propagate computed values to the DOM.
+</Aside>
+
+### Why this approach?
+
+Automatic dependency tracking requires either:
+- A custom reactive system (proxies, getters/setters) that wraps the state object
+- Or a compile step
+
+Neither aligns with reQuery's goals. Keeping `rqComputed` lazy means the implementation stays simple, the state object remains a plain JS object, and there are no hidden surprises from accidental dependency capture.
+
+## Cross-key updates in watchers
+
+A common pattern is to update one key when another changes. Because `rqSet` is re-entrant (it simply writes to the WeakMap), you can safely call it inside a watcher:
+
+```js
+$('#app')
+  .rqState({ firstName: '', lastName: '', fullName: '' })
+  .rqWatch('firstName', () => {
+    $('#app').rqSet('fullName',
+      `${$('#app').rqGet('firstName')} ${$('#app').rqGet('lastName')}`
+    );
+  })
+  .rqWatch('lastName', () => {
+    $('#app').rqSet('fullName',
+      `${$('#app').rqGet('firstName')} ${$('#app').rqGet('lastName')}`
+    );
+  });
+```
+
+## No-op optimisation
+
+`rqSet` uses `Object.is()` to compare the new and old value. If they are identical, the update pipeline is skipped entirely — no watchers fire and no DOM updates run.
+
+```js
+$('#app').rqSet('count', 5); // triggers update
+$('#app').rqSet('count', 5); // no-op — nothing happens
+```
+
+<Aside type="note">
+  `Object.is` is a strict identity check. For objects and arrays, two different references are never `Object.is`-equal even if their contents are the same. Use `rqMutate` return-same-reference patterns carefully, or accept that object/array updates will always trigger.
+</Aside>

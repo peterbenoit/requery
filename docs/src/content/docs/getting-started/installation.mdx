@@ -1,0 +1,62 @@
+---
+title: Installation
+description: How to add reQuery to your project — via CDN script tag or npm.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+reQuery is a jQuery 4 plugin. You need jQuery 4 loaded before reQuery.
+
+## CDN (script tag)
+
+The simplest way to get started. No build step, no bundler.
+
+```html
+<!-- 1. jQuery 4 -->
+<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+
+<!-- 2. reQuery UMD bundle -->
+<script src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"></script>
+
+<!-- 3. Your code -->
+<script>
+  $('#app').rqState({ count: 0 });
+</script>
+```
+
+The UMD bundle registers itself on the `$` / `jQuery` global automatically. No `import` or `require` needed.
+
+## npm / ESM
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install requery jquery
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add requery jquery
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add requery jquery
+    ```
+  </TabItem>
+</Tabs>
+
+Then import in your entry file:
+
+```js
+import $ from 'jquery';
+import 'requery'; // registers $.fn.rq* methods as a side effect
+```
+
+## Peer dependency
+
+reQuery lists `jquery >= 4.0.0` as a peer dependency. **jQuery 3.x is not supported** — reQuery relies on jQuery 4's removal of deprecated APIs and its alignment with modern DOM standards.
+
+## Browser support
+
+Wherever jQuery 4 runs — all modern browsers. IE is not supported.

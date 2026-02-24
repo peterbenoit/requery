@@ -1,0 +1,113 @@
+---
+title: Contributing
+description: How to contribute to reQuery — dev setup, code style, and conventions.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Contributions are welcome. This guide covers the development setup, code style rules, and the project's phase-based architecture.
+
+## Dev setup
+
+```bash
+git clone https://github.com/peterbenoit/requery.git
+cd requery
+npm install
+```
+
+### Available commands
+
+| Command | Purpose |
+|---|---|
+| `npm run build` | Build `dist/requery.esm.js` and `dist/requery.umd.js` |
+| `npm run dev` | Watch mode — rebuilds `dist/` on every source change |
+| `npm test` | Run the Vitest test suite once |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run docs:dev` | Start the Astro docs dev server (`localhost:4321`) |
+| `npm run docs:build` | Build the docs site to `docs/dist/` |
+
+## Project structure
+
+```
+src/
+  core/
+    state.js      ← Phase 1: WeakMap store, rqState/rqGet/rqSet/rqMutate/rqWatch/rqComputed
+    binding.js    ← Phase 2: data-rq-* DOM binding engine
+    lists.js      ← Phase 4: data-rq-each list rendering
+    events.js     ← Phase 5: data-rq-on-* declarative events
+  requery.js      ← Entry point: assembles and registers $.fn.rq* methods
+dist/             ← Built output — do not edit directly
+test/             ← Vitest tests, one file per source module
+examples/         ← Plain HTML demos, no build step required
+docs/             ← Astro Starlight documentation site
+```
+
+## Phase architecture
+
+Work is organised into phases. **Do not implement a later phase if an earlier one is incomplete or untested.**
+
+| Phase | Module | Status |
+|---|---|---|
+| 1 | State Core (`state.js`) | ✅ Complete |
+| 2 | DOM Binding (`binding.js`) | ✅ Complete |
+| 3 | Watch & Computed | ✅ Complete (lives in `state.js`) |
+| 4 | List Rendering (`lists.js`) | ✅ Complete |
+| 5 | Declarative Events (`events.js`) | ✅ Complete |
+
+## Code style
+
+- **ES2020+** — jQuery 4 dropped IE; so do we
+- **2-space indentation**
+- **Single quotes** for strings
+- **Semicolons** required
+- **`const` by default**, `let` when mutation is needed, never `var`
+- **JSDoc comments** on all public functions
+- **No TypeScript** — keep it plain JS and script-tag friendly
+- **Named functions** over anonymous arrows for jQuery plugin methods
+
+## Adding a feature
+
+1. Write the feature in the appropriate `src/core/*.js` file
+2. Register any new `$.fn.rq*` methods in `src/requery.js`
+3. Add or update tests in the corresponding `test/*.test.js` file — **tests are required**
+4. Add a plain HTML demo in `examples/`
+5. Document the feature on the doc site in `docs/src/content/docs/`
+6. Run `npm run build` to verify the output is clean
+7. Run `npm test` to confirm the test suite passes
+
+<Aside type="caution" title="Never edit dist/ directly">
+  The `dist/` folder is build output. All changes must go through source files in `src/` and be rebuilt via `npm run build`.
+</Aside>
+
+## Adding an example
+
+Every feature must have a corresponding plain HTML file in `examples/`. These files:
+
+- Load jQuery 4 from CDN (no local copy)
+- Load `../dist/requery.umd.js` via a relative `<script>` tag
+- Require **no build step** to open in a browser
+- Serve as living documentation for end users who prefer reading code
+
+## Testing conventions
+
+- One test file per source module: `test/state.test.js`, `test/binding.test.js`, etc.
+- Tests use **happy-dom** for DOM simulation (configured in Vitest)
+- Each test should be **independent** — no shared mutable state between tests
+- Test the **public `$.fn.rq*` API**, not internal WeakMap internals directly
+- Run `npm test` before opening any pull request
+
+## Pull requests
+
+- Keep PRs focused on a single concern
+- Include a test and a docs update with any new functionality
+- Reference the relevant phase in the PR description if applicable
+- Passing tests are required — the CI check runs `npm test`
+
+## Opening issues
+
+Use the [GitHub issue tracker](https://github.com/peterbenoit/requery/issues). When reporting a bug, include:
+
+- reQuery version
+- jQuery version
+- A minimal reproduction (ideally a CodePen or plain HTML file)
+- Expected vs actual behaviour

@@ -1,0 +1,87 @@
+---
+title: rqState()
+description: Initialize reactive state on a matched element.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Signature
+
+```ts
+$.fn.rqState(initialData: object, opts?: { actions?: object }): this
+```
+
+**Chainable** — returns `this` for jQuery chaining.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `initialData` | `object` | Yes | Key/value pairs to initialize as reactive state |
+| `opts` | `object` | No | Options object |
+| `opts.actions` | `object` | No | Named action handlers for `data-rq-on-*` declarative events |
+
+## Description
+
+`rqState()` is the entry point for reQuery. It:
+
+1. Stores `initialData` in a WeakMap keyed to the root element
+2. Wires two-way `input`/`change` listeners on any `[data-rq-val]` elements in the subtree
+3. Wires any declarative event actions passed in `opts.actions`
+4. Runs an initial full render pass — all `data-rq-*` elements are populated immediately
+
+Calling `rqState()` again on the same element **merges** new keys in rather than resetting:
+
+```js
+$('#app').rqState({ count: 0 });
+$('#app').rqState({ label: 'Counter' }); // count is still 0
+```
+
+## Examples
+
+### Basic state
+
+```js
+$('#app').rqState({
+  count: 0,
+  message: 'Hello',
+  visible: true,
+});
+```
+
+### With declarative actions
+
+Actions are functions keyed by name. They are invoked by `data-rq-on-[event]="actionName"` attributes. Each action receives the current state, the original event, and the root jQuery element.
+
+```html
+<div id="app">
+  <p data-rq-text="count"></p>
+  <button data-rq-on-click="increment">+</button>
+  <button data-rq-on-click="decrement">−</button>
+</div>
+```
+
+```js
+$('#app').rqState({ count: 0 }, {
+  actions: {
+    increment: (state) => ({ count: state.count + 1 }),
+    decrement: (state) => ({ count: state.count - 1 }),
+  },
+});
+```
+
+The action's return value is a **partial state update** — only the returned keys are updated via `rqSet`. Return `undefined` or `void` to make no change.
+
+### Chaining
+
+```js
+$('#app')
+  .rqState({ count: 0 })
+  .rqWatch('count', (val) => console.log('count:', val))
+  .rqSet('count', 5);
+```
+
+## Notes
+
+- The `opts.actions` object is a convenience for wiring `data-rq-on-*` handlers without writing manual event listeners. See [DOM Bindings — data-rq-on-*](/api/dom-bindings/#data-rq-on-event) for details.
+- `rqState()` applies to **each element** in the jQuery set. If the selector matched multiple elements, each gets its own independent state record.

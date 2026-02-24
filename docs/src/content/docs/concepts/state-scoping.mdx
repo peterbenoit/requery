@@ -1,0 +1,74 @@
+---
+title: State Scoping
+description: How reQuery scopes reactive state to individual DOM elements using a WeakMap.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+In most reactive frameworks, state lives in a global store or component tree. reQuery takes a different approach: **state is scoped to a specific DOM element**.
+
+## How it works
+
+When you call `rqState()` on an element, reQuery stores the state in a `WeakMap` keyed to that DOM node:
+
+```js
+$('#sidebar').rqState({ open: false });
+$('#counter').rqState({ count: 0, step: 1 });
+```
+
+These are completely independent. Changing `count` on `#counter` has no effect on `#sidebar`, and vice versa.
+
+## Why a WeakMap?
+
+A `WeakMap` holds its keys **weakly** — when the DOM element is garbage collected (e.g. removed from the page), the associated state is automatically freed too. There are no memory leaks, no manual cleanup, and no interference with jQuery's own `$.data()` storage.
+
+<Aside type="tip">
+  You do not need to destroy or reset state when removing an element. The WeakMap handles cleanup automatically.
+</Aside>
+
+## Binding scope
+
+All `data-rq-*` attribute bindings are **resolved within the root element's subtree**. reQuery uses `$(rootEl).find('[data-rq-text="key"]')` — it never traverses outside the element you called `rqState()` on.
+
+This means you can safely have multiple independent reactive zones on the same page:
+
+```html
+<div id="cart">
+  <span data-rq-text="total"></span>
+</div>
+
+<div id="profile">
+  <span data-rq-text="name"></span>
+</div>
+```
+
+```js
+$('#cart').rqState({ total: 0 });
+$('#profile').rqState({ name: 'Alice' });
+```
+
+`data-rq-text="total"` inside `#profile` would not be affected by the `#cart` state, because bindings are only applied within their owning root element.
+
+## Calling `rqState()` again
+
+Calling `rqState()` on an element that already has state **merges** the new keys in — it does not reset existing state:
+
+```js
+$('#app').rqState({ count: 0 });
+// Later:
+$('#app').rqState({ label: 'Counter' }); // count is still 0
+```
+
+This is useful for progressively initialising state across multiple scripts or modules.
+
+## What lives in the state record
+
+Internally, each element's state record has three sections:
+
+| Field | Purpose |
+|---|---|
+| `data` | The raw key/value state object |
+| `watchers` | Map of `key → Function[]` for `rqWatch` callbacks |
+| `computed` | Map of `key → Function` for `rqComputed` definitions |
+
+None of these are accessible directly — use the `$.fn.rq*` methods to interact with state.

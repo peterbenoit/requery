@@ -1,0 +1,86 @@
+---
+title: rqComputed()
+description: Define a derived state value calculated from other state keys.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Signature
+
+```ts
+$.fn.rqComputed(key: string, fn: (allData: object) => any): this
+```
+
+**Chainable** — returns `this` for jQuery chaining.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `key` | `string` | Yes | The name for this computed value |
+| `fn` | `function` | Yes | Receives the entire state data object, returns the derived value |
+
+## Description
+
+`rqComputed()` stores a derivation function that is evaluated when `rqGet(key)` is called. The function receives the complete `allData` state object and should return a derived value.
+
+<Aside type="caution" title="Lazy — not automatically reactive">
+  Unlike Vue's `computed()` or MobX computed values, `rqComputed` does **not** track dependencies and does **not** automatically re-push the result to `data-rq-*` DOM bindings when dependencies change. Read [Reactivity Model](/concepts/reactivity-model/) for how to handle this.
+</Aside>
+
+## Examples
+
+### Cart total
+
+```js
+$('#cart')
+  .rqState({ price: 29.99, qty: 3 })
+  .rqComputed('total', ({ price, qty }) => (price * qty).toFixed(2));
+
+$('#cart').rqGet('total'); // "89.97"
+```
+
+### Full name
+
+```js
+$('#profile')
+  .rqState({ firstName: 'Alice', lastName: 'Smith' })
+  .rqComputed('fullName', ({ firstName, lastName }) => `${firstName} ${lastName}`);
+
+$('#profile').rqGet('fullName'); // "Alice Smith"
+```
+
+### Pushing computed values to the DOM
+
+Because `rqComputed` is lazy, you must manually push updates to the DOM when dependencies change:
+
+```js
+function syncTotal() {
+  $('#cart').rqSet('total', $('#cart').rqGet('total'));
+}
+
+$('#cart')
+  .rqWatch('price', syncTotal)
+  .rqWatch('qty', syncTotal);
+```
+
+Then bind it in HTML:
+
+```html
+<span data-rq-text="total"></span>
+```
+
+### Chaining after rqComputed
+
+```js
+$('#app')
+  .rqState({ a: 1, b: 2 })
+  .rqComputed('sum',  ({ a, b }) => a + b)
+  .rqComputed('diff', ({ a, b }) => a - b);
+```
+
+## Notes
+
+- A computed `key` can shadow a plain data key if both have the same name. The computed function takes priority in `rqGet`.
+- The compute `fn` receives the **raw data object**, not a reactive proxy — reading from `allData` inside `fn` has no tracking side effects.
+- `fn` is called fresh every time `rqGet(key)` is called. Results are not cached.

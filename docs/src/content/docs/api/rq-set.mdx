@@ -1,0 +1,79 @@
+---
+title: rqSet()
+description: Write a state value and trigger DOM binding updates.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Signature
+
+```ts
+$.fn.rqSet(key: string, value: any): this
+```
+
+**Chainable** — returns `this` for jQuery chaining.
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `key` | `string` | Yes | The state key to update |
+| `value` | `any` | Yes | The new value |
+
+## Description
+
+`rqSet()` writes a new value for `key` and triggers the full update pipeline:
+
+1. **No-op check** — if `Object.is(oldValue, value)` is `true`, nothing happens
+2. **Write** — `state.data[key] = value`
+3. **Watchers** — all `rqWatch` callbacks for `key` run synchronously
+4. **DOM bindings** — all `data-rq-*` elements bound to `key` update immediately
+5. **List rendering** — if `value` is an array, `data-rq-each` re-renders
+
+See [Binding Lifecycle](/concepts/binding-lifecycle/) for the full pipeline diagram.
+
+## Examples
+
+### Basic write
+
+```js
+$('#app')
+  .rqState({ message: 'Hello' })
+  .rqSet('message', 'World');
+```
+
+### Chaining multiple sets
+
+```js
+$('#app')
+  .rqSet('title', 'My App')
+  .rqSet('loading', false)
+  .rqSet('count', 0);
+```
+
+### Setting to null removes attributes
+
+When used with `data-rq-attr-*`, setting a value to `null` removes the attribute entirely:
+
+```js
+$('#app').rqSet('imageUrl', null);
+// Any element with data-rq-attr-src="imageUrl" will have its src attribute removed
+```
+
+### Conditional update
+
+```js
+if ($('#app').rqGet('count') < 100) {
+  $('#app').rqSet('count', $('#app').rqGet('count') + 1);
+}
+```
+
+<Aside type="tip">
+  For safe mutation of existing values (especially objects and arrays), prefer [`rqMutate()`](/api/rq-mutate/) over reading with `rqGet` and writing with `rqSet`.
+</Aside>
+
+## Notes
+
+- `Object.is()` is used for the no-op check. Two different object/array references are never `Object.is`-equal, so updating an object will always trigger even if the contents are unchanged.
+- Setting a key that was not in `initialData` works — the key is added to the state record and bindings are updated. However, it will not be reflected in any `data-rq-*` attributes that were rendered before this key existed.
+- Applies to **every element** in the jQuery set.

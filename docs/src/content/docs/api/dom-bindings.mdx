@@ -1,0 +1,313 @@
+---
+title: DOM Bindings
+description: All data-rq-* attributes — how they work, their edge cases, and examples.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import CodePenButton from '../../../components/CodePenButton.astro';
+
+reQuery's declarative bindings are HTML attributes prefixed with `data-rq-`. Each attribute maps a state key to a DOM behaviour. Bindings are scoped to the subtree of the element that called `rqState()`.
+
+## Overview
+
+| Attribute | Purpose |
+|---|---|
+| [`data-rq-text`](#data-rq-text) | Set `textContent` |
+| [`data-rq-html`](#data-rq-html) | Set `innerHTML` |
+| [`data-rq-val`](#data-rq-val) | Two-way bind for inputs, selects, and textareas |
+| [`data-rq-show`](#data-rq-show) | Show / hide element |
+| [`data-rq-attr-[name]`](#data-rq-attr-name) | Set any HTML attribute |
+| [`data-rq-class-[name]`](#data-rq-class-name) | Toggle a CSS class |
+| [`data-rq-each`](#data-rq-each) | Render an array into a `<template>` |
+| [`data-rq-on-[event]`](#data-rq-on-event) | Declarative event handler |
+
+---
+
+## data-rq-text
+
+Sets `element.textContent` to the state value. Null or undefined renders as an empty string.
+
+```html
+<p data-rq-text="message"></p>
+```
+
+```js
+$('#app').rqState({ message: 'Hello, world!' });
+// <p>Hello, world!</p>
+```
+
+- Value is coerced to a string via `String(value)`
+- Safe — HTML in the value is not interpreted (use `data-rq-html` if you need markup)
+
+---
+
+## data-rq-html
+
+Sets `element.innerHTML`. Use when the state value contains HTML markup.
+
+```html
+<div data-rq-html="content"></div>
+```
+
+```js
+$('#app').rqState({ content: '<strong>Bold</strong> text' });
+```
+
+<Aside type="caution">
+  Only use `data-rq-html` with trusted content. Setting innerHTML with user-supplied strings is an XSS risk.
+</Aside>
+
+---
+
+## data-rq-val
+
+Two-way binding for form elements. Changes in state update the element; user input updates state.
+
+```html
+<input type="text" data-rq-val="username" />
+<textarea data-rq-val="bio"></textarea>
+<select data-rq-val="country">
+  <option value="us">US</option>
+  <option value="uk">UK</option>
+</select>
+```
+
+### Type-specific behaviour
+
+| Input type | State → DOM | DOM → State |
+|---|---|---|
+| `text`, `textarea`, `select` | `el.value = String(value)` | `el.value` (string) |
+| `number`, `range` | `el.value = String(value)` | `parseFloat(el.value)` |
+| `checkbox` | `el.checked = Boolean(value)` | `el.checked` (boolean) |
+| `radio` | `el.checked = (el.value === String(value))` | `el.value` (string) of the checked radio |
+
+<Aside type="note" title="Radio inputs">
+  For radio buttons, set all buttons in a group to `data-rq-val="sameKey"`. The state value should match `el.value` of the desired radio button (string comparison).
+</Aside>
+
+### Example: checkbox
+
+```html
+<label>
+  <input type="checkbox" data-rq-val="agree" /> I agree
+</label>
+```
+
+```js
+$('#app').rqState({ agree: false });
+$('#app').rqGet('agree'); // false (boolean)
+```
+
+---
+
+## data-rq-show
+
+Shows or hides the element based on the truthiness of the state value. Uses jQuery's `.show()` / `.hide()`.
+
+```html
+<div data-rq-show="isLoggedIn">
+  Welcome back!
+</div>
+```
+
+```js
+$('#app').rqState({ isLoggedIn: false });
+// element is hidden
+
+$('#app').rqSet('isLoggedIn', true);
+// element becomes visible
+```
+
+- Truthy → `$(el).show()` (restores `display`)
+- Falsy → `$(el).hide()` (`display: none`)
+
+---
+
+## data-rq-attr-[name]
+
+Sets the attribute `[name]` on the element. Replace `[name]` with any valid HTML attribute name.
+
+```html
+<a data-rq-attr-href="url" data-rq-text="linkLabel">Link</a>
+<img data-rq-attr-src="imageUrl" data-rq-attr-alt="imageAlt" />
+<button data-rq-attr-disabled="isDisabled">Submit</button>
+```
+
+```js
+$('#app').rqState({
+  url: 'https://example.com',
+  linkLabel: 'Visit Example',
+  imageUrl: '/photo.jpg',
+  imageAlt: 'A photo',
+  isDisabled: true,
+});
+```
+
+### Setting to null removes the attribute
+
+```js
+$('#app').rqSet('imageUrl', null);
+// The src attribute is removed entirely from the element
+```
+
+<Aside type="tip">
+  Use `null` to remove an attribute cleanly. Empty string `''` sets the attribute to an empty string, which is different (e.g., `disabled=""` vs no `disabled` attribute).
+</Aside>
+
+---
+
+## data-rq-class-[name]
+
+Toggles the CSS class `[name]` based on the truthiness of the state value. Replace `[name]` with any CSS class name.
+
+```html
+<div class="card" data-rq-class-active="isActive" data-rq-class-error="hasError">
+  Content
+</div>
+```
+
+```js
+$('#app').rqState({ isActive: true, hasError: false });
+// <div class="card active">Content</div>
+```
+
+Internally uses `classList.toggle(name, Boolean(value))`.
+
+---
+
+## data-rq-each
+
+Renders an array of items using a `<template>` element. Each array item gets its own clone of the template.
+
+### Setup
+
+The `<template>` element must have `data-rq-each="key"`. reQuery automatically creates a sibling `<div data-rq-list="key">` container to hold the rendered clones.
+
+```html
+<div id="app">
+  <template data-rq-each="items">
+    <li data-rq-text="name"></li>
+  </template>
+  <!-- reQuery inserts: <div data-rq-list="items">...</div> -->
+</div>
+```
+
+```js
+$('#app').rqState({
+  items: [
+    { name: 'Apple' },
+    { name: 'Banana' },
+    { name: 'Cherry' },
+  ],
+});
+```
+
+Renders:
+
+```html
+<li>Apple</li>
+<li>Banana</li>
+<li>Cherry</li>
+```
+
+### Object items
+
+Each key in the item object is available as a binding inside the template clone:
+
+```html
+<template data-rq-each="users">
+  <div class="user">
+    <strong data-rq-text="name"></strong>
+    <span data-rq-text="role"></span>
+  </div>
+</template>
+```
+
+```js
+$('#app').rqState({
+  users: [
+    { name: 'Alice', role: 'Admin' },
+    { name: 'Bob',   role: 'Editor' },
+  ],
+});
+```
+
+### Primitive items
+
+For primitive arrays (strings, numbers), each item is wrapped as `{ value, $index }`:
+
+```html
+<template data-rq-each="tags">
+  <span data-rq-text="value"></span>
+</template>
+```
+
+```js
+$('#app').rqState({ tags: ['javascript', 'jquery', 'reactive'] });
+// Renders three spans: "javascript", "jquery", "reactive"
+```
+
+The `$index` key (0-based) is always injected and available as a binding.
+
+### Updating the list
+
+Use `rqMutate` with a new array reference to update the list. `data-rq-each` re-renders the full list on every change.
+
+```js
+$('#app').rqMutate('items', items => [...items, { name: 'Date' }]);
+```
+
+<Aside type="caution" title="Full re-render">
+  Every array update clears and re-renders the entire list. There is no diffing or keying. For large, frequently-updated lists, consider whether this performance characteristic is acceptable.
+</Aside>
+
+---
+
+## data-rq-on-[event]
+
+Declarative event binding. Replace `[event]` with any DOM event name (`click`, `submit`, `change`, etc.). The value is the name of an action function passed in `opts.actions` to `rqState()`.
+
+```html
+<div id="app">
+  <p data-rq-text="count"></p>
+  <button data-rq-on-click="increment">+</button>
+  <button data-rq-on-click="decrement">−</button>
+</div>
+```
+
+```js
+$('#app').rqState({ count: 0 }, {
+  actions: {
+    increment: (state, event, $root) => ({ count: state.count + 1 }),
+    decrement: (state, event, $root) => ({ count: state.count - 1 }),
+  },
+});
+```
+
+### Action signature
+
+```ts
+type Action = (
+  state: object,       // current state data (read-only snapshot)
+  event: Event,        // the original DOM event
+  $root: JQuery        // the jQuery-wrapped root element
+) => object | void;
+```
+
+The **return value** is a partial state update. Only the returned keys are updated via `rqSet`. Return `undefined` or nothing to make no state change (useful for actions with pure side effects).
+
+### Example with side effects
+
+```js
+actions: {
+  submit: (state, event) => {
+    event.preventDefault();
+    fetch('/api', { method: 'POST', body: JSON.stringify(state) });
+    // No return value — no state change
+  },
+}
+```
+
+<Aside type="note">
+  Events are delegated from the root element. The handler is registered once on the root and checks if the clicked element has the matching `data-rq-on-[event]` attribute. This is efficient and works for dynamically-rendered elements (e.g. inside `data-rq-each`).
+</Aside>

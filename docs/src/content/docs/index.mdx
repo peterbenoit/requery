@@ -1,0 +1,36 @@
+---
+title: reQuery
+description: A jQuery 4 plugin for reactive state and declarative DOM binding.
+template: splash
+hero:
+  tagline: Reactive state and declarative DOM binding — the jQuery way.
+  actions:
+    - text: Quick Start
+      link: /getting-started/quick-start/
+      icon: right-arrow
+    - text: API Reference
+      link: /api/rq-state/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Why reQuery?
+
+reQuery brings reactivity to jQuery 4 projects — no build step, no virtual DOM, no component tree. Just selectors, state, and declarative HTML attributes.
+
+<CardGrid stagger>
+  <Card title="Element-scoped state" icon="puzzle">
+    State lives on the DOM element, not in a global store. Scope it, isolate it, move on.
+  </Card>
+  <Card title="Declarative binding" icon="document">
+    `data-rq-text`, `data-rq-show`, `data-rq-each`, and more — wire up your UI in HTML with no JavaScript boilerplate.
+  </Card>
+  <Card title="Chainable jQuery API" icon="seti:html">
+    `$('#app').rqState({...}).rqSet('count', 1).rqWatch('count', fn)` — feels exactly like jQuery.
+  </Card>
+  <Card title="No build step for consumers" icon="rocket">
+    Drop `requery.umd.js` next to jQuery 4 in a `<script>` tag and you're done.
+  </Card>
+</CardGrid>

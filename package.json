@@ -8,7 +8,9 @@
 		"build": "vite build",
 		"dev": "vite build --watch",
 		"test": "vitest run",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"docs:dev": "cd docs && npm run dev",
+		"docs:build": "cd docs && npm run build"
 	},
 	"keywords": [
 		"jquery",

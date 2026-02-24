@@ -1,0 +1,79 @@
+---
+title: Binding Lifecycle
+description: What happens between calling rqSet() and the DOM updating.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Understanding the update flow helps you reason about timing, watchers, and side effects.
+
+## The update pipeline
+
+Every state change — whether from `rqSet()`, `rqMutate()`, or a two-way input event — passes through the same pipeline:
+
+```
+rqSet(key, value)
+  │
+  ├─ 1. No-op check (Object.is)
+  │       If the value hasn't changed, stop here.
+  │
+  ├─ 2. Write to state
+  │       record.data[key] = value
+  │
+  ├─ 3. Notify watchers
+  │       All rqWatch callbacks for this key run synchronously.
+  │       Each receives (newValue, oldValue).
+  │
+  └─ 4. Apply DOM bindings
+          applyBindings(rootEl, key, value, allData)
+            ├─ data-rq-text     → el.textContent = value
+            ├─ data-rq-html     → el.innerHTML = value
+            ├─ data-rq-val      → el.value / el.checked = value
+            ├─ data-rq-show     → $(el).show() / .hide()
+            ├─ data-rq-attr-*   → el.setAttribute / removeAttribute
+            └─ data-rq-class-*  → el.classList.toggle(name, Boolean(value))
+
+          renderList(rootEl, key, value)   ← only if value is an Array
+            └─ data-rq-each     → clears container, clones <template> per item
+```
+
+## Everything is synchronous
+
+reQuery does not batch updates or defer to `requestAnimationFrame`. When `rqSet()` returns, the DOM has already been updated. Watchers have already run.
+
+<Aside type="note">
+  This matches jQuery's own synchronous DOM model. If you need to batch updates (e.g. updating five keys at once), call `rqMutate` in sequence — the DOM will update after each call, not once at the end. This is a conscious tradeoff: simplicity over micro-performance.
+</Aside>
+
+## Initial render
+
+When `rqState()` is called, reQuery immediately runs a full render pass over all `data-rq-*` elements in the subtree (`renderAll`). This means you can set up your HTML with binding attributes before calling `rqState()` and it will populate correctly without a flash of empty content.
+
+```html
+<!-- HTML is already in the DOM with binding attributes -->
+<span data-rq-text="count"></span>
+
+<script>
+  // rqState triggers an immediate render pass — the span shows 0 right away
+  $('#app').rqState({ count: 0 });
+</script>
+```
+
+## Two-way input binding
+
+When `rqState()` is called, reQuery also wires `change` and `input` event listeners on any `[data-rq-val]` elements within the subtree. These listeners call `setState` internally, which runs the full update pipeline (watchers → DOM bindings).
+
+The state-to-DOM direction (when `rqSet` is called programmatically) and the DOM-to-state direction (user types in an input) both trigger the same pipeline, so watchers always fire regardless of which direction the change originated.
+
+## List rendering
+
+`data-rq-each` rendering is handled separately from the main `applyBindings` pass. After the standard bindings are applied, `renderList` checks if the changed key's value is an array. If so, it:
+
+1. Finds the `<template data-rq-each="key">` inside the root element
+2. Clears the adjacent `<div data-rq-list="key">` container
+3. Clones the template once per array item
+4. Calls `renderAll` inside each clone with the item's data
+
+<Aside type="caution">
+  List rendering is a **full clear and re-render** on every update. There is no diffing or keying. For large lists that change frequently, be mindful of the re-render cost.
+</Aside>

@@ -1,0 +1,86 @@
+---
+/**
+ * CodePenButton — opens a pre-filled CodePen with the given HTML/CSS/JS.
+ * Uses the CodePen Prefill API (POST form) so there's no iframe at page load.
+ *
+ * Usage in MDX:
+ *   import CodePenButton from '../../components/CodePenButton.astro';
+ *   <CodePenButton
+ *     title="Counter demo"
+ *     html={`<div id="app">...</div>`}
+ *     js={`$('#app').rqState({ count: 0 });`}
+ *   />
+ */
+interface Props {
+  title: string;
+  html?: string;
+  css?: string;
+  js?: string;
+  /** Extra JS URLs to include (e.g. jQuery CDN) */
+  jsExternal?: string;
+}
+
+const {
+  title,
+  html = '',
+  css = '',
+  js = '',
+  jsExternal = 'https://code.jquery.com/jquery-4.0.0.min.js',
+} = Astro.props;
+
+// CodePen prefill data — the form field must be JSON-stringified
+const penData = JSON.stringify({
+  title,
+  html,
+  css,
+  js,
+  js_external: [
+    jsExternal,
+    // Point to jsDelivr once the package is published; for now use a placeholder
+    'https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js',
+  ].join(';'),
+  editors: '1010', // HTML + JS open, CSS collapsed
+});
+---
+
+<form
+  action="https://codepen.io/pen/define"
+  method="POST"
+  target="_blank"
+  class="codepen-button-form"
+>
+  <input type="hidden" name="data" value={penData} />
+  <button type="submit" class="codepen-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M24 8.182l-.018-.087-.017-.05c-.01-.024-.018-.05-.03-.075l-.023-.044-.03-.038-.032-.036-.045-.03-.05-.026-.04-.018-.06-.01H.452l-.06.01-.04.018-.05.026-.044.03-.036.03-.03.04-.024.044-.03.075-.017.05L0 8.18v7.638l.018.087.017.05.03.075.023.044.03.04.032.035.044.03.05.026.04.018.06.01h23.076l.06-.01.04-.018.05-.026.044-.03.036-.036.03-.04.024-.044.03-.075.017-.05L24 15.82z"/>
+    </svg>
+    Open in CodePen
+  </button>
+</form>
+
+<style>
+  .codepen-button-form {
+    display: inline-block;
+    margin: 0.5rem 0 1rem;
+  }
+
+  .codepen-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--sl-color-gray-4);
+    background: var(--sl-color-gray-7);
+    color: var(--sl-color-text);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-decoration: none;
+  }
+
+  .codepen-button:hover {
+    background: var(--sl-color-gray-6);
+    border-color: var(--sl-color-accent);
+  }
+</style>

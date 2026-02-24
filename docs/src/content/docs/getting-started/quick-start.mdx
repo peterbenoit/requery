@@ -1,0 +1,120 @@
+---
+title: Quick Start
+description: Build a reactive counter in under two minutes with reQuery.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import CodePenButton from '../../../components/CodePenButton.astro';
+
+This guide walks through reQuery's core features using a counter — the "Hello World" of reactive UIs.
+
+## 1. The HTML
+
+Mark up your UI with `data-rq-*` attributes. reQuery will bind state to them automatically.
+
+```html
+<div id="app">
+  <p>Count: <strong data-rq-text="count"></strong></p>
+  <button id="inc">+</button>
+  <button id="dec">−</button>
+  <button id="reset">Reset</button>
+</div>
+```
+
+## 2. Initialise state
+
+Call `rqState()` on the root element with your initial data.
+
+```js
+$('#app').rqState({ count: 0 });
+```
+
+That's it — `<strong data-rq-text="count">` now shows `0`.
+
+## 3. Update state
+
+Use `rqMutate()` for safe updates (receives the current value), or `rqSet()` for direct writes.
+
+```js
+$('#inc').on('click', () => {
+  $('#app').rqMutate('count', n => n + 1);
+});
+
+$('#dec').on('click', () => {
+  $('#app').rqMutate('count', n => n - 1);
+});
+
+$('#reset').on('click', () => {
+  $('#app').rqSet('count', 0);
+});
+```
+
+Every call to `rqSet` or `rqMutate` automatically updates all `data-rq-*` elements bound to that key.
+
+## 4. Watch for changes (optional)
+
+Register a watcher to run side effects when a key changes.
+
+```js
+$('#app').rqWatch('count', (newVal, oldVal) => {
+  console.log(`count changed from ${oldVal} to ${newVal}`);
+});
+```
+
+## Full example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>reQuery Counter</title>
+</head>
+<body>
+  <div id="app">
+    <p>Count: <strong data-rq-text="count"></strong></p>
+    <button id="inc">+</button>
+    <button id="dec">−</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"></script>
+  <script>
+    $('#app').rqState({ count: 0 });
+
+    $('#inc').on('click', () => $('#app').rqMutate('count', n => n + 1));
+    $('#dec').on('click', () => $('#app').rqMutate('count', n => n - 1));
+    $('#reset').on('click', () => $('#app').rqSet('count', 0));
+
+    $('#app').rqWatch('count', (val) => {
+      document.title = `Count: ${val}`;
+    });
+  </script>
+</body>
+</html>
+```
+
+<CodePenButton
+  title="reQuery Counter"
+  html={`<div id="app">
+  <p>Count: <strong data-rq-text="count"></strong></p>
+  <button id="inc">+</button>
+  <button id="dec">−</button>
+  <button id="reset">Reset</button>
+</div>`}
+  js={`$('#app').rqState({ count: 0 });
+
+$('#inc').on('click', () => $('#app').rqMutate('count', n => n + 1));
+$('#dec').on('click', () => $('#app').rqMutate('count', n => n - 1));
+$('#reset').on('click', () => $('#app').rqSet('count', 0));
+
+$('#app').rqWatch('count', (val) => {
+  document.title = 'Count: ' + val;
+});`}
+/>
+
+## What's next?
+
+- Learn about [State Scoping](/concepts/state-scoping/) — why state lives on the element, not globally.
+- See all [DOM binding attributes](/api/dom-bindings/) — `data-rq-val`, `data-rq-show`, `data-rq-each`, and more.
+- Read the full [API Reference](/api/rq-state/).

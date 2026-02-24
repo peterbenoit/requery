@@ -5,8 +5,22 @@ description: All data-rq-* attributes — how they work, their edge cases, and e
 
 import { Aside } from '@astrojs/starlight/components';
 import CodePenButton from '../../../components/CodePenButton.astro';
+import PlainEnglish from '../../../components/PlainEnglish.astro';
 
 reQuery's declarative bindings are HTML attributes prefixed with `data-rq-`. Each attribute maps a state key to a DOM behaviour. Bindings are scoped to the subtree of the element that called `rqState()`.
+
+<PlainEnglish>
+
+Think of `data-rq-*` attributes as **sticky notes you put on your HTML elements**. Each note says: *"Hey reQuery, whenever this state value changes, update me in this way."*
+
+For example:
+- `data-rq-text="message"` — *"Put the value of `message` as my text content."*
+- `data-rq-show="isLoggedIn"` — *"Show me when `isLoggedIn` is true, hide me when it's false."*
+- `data-rq-val="username"` — *"Keep this input in sync with `username` in both directions."*
+
+You write the notes once in HTML. reQuery reads them and handles all the updating automatically whenever you call `rqSet()`.
+
+</PlainEnglish>
 
 ## Overview
 
@@ -311,3 +325,78 @@ actions: {
 <Aside type="note">
   Events are delegated from the root element. The handler is registered once on the root and checks if the clicked element has the matching `data-rq-on-[event]` attribute. This is efficient and works for dynamically-rendered elements (e.g. inside `data-rq-each`).
 </Aside>
+
+---
+
+## Full example
+
+A single form that exercises all of the major binding types at once.
+
+<CodePenButton
+  title="reQuery — DOM Bindings (all binding types)"
+  html={`<div id="app" style="padding:1.5rem;font-family:sans-serif;max-width:420px">
+  <h2 style="margin-top:0" data-rq-text="heading"></h2>
+
+  <!-- data-rq-val (text) + data-rq-text -->
+  <label style="display:block;margin-bottom:0.8rem">
+    Your name:
+    <input type="text" data-rq-val="name"
+           style="margin-left:0.4rem;padding:0.25rem 0.5rem" />
+  </label>
+  <p>Hello, <strong data-rq-text="name"></strong>!</p>
+
+  <!-- data-rq-show -->
+  <p data-rq-show="name" style="color:seagreen;display:none">
+    ✓ Name is set
+  </p>
+
+  <!-- data-rq-val (checkbox) + data-rq-class-* -->
+  <label style="display:block;margin:0.8rem 0">
+    <input type="checkbox" data-rq-val="dark" /> Dark mode
+  </label>
+
+  <div data-rq-class-dark="dark"
+       style="padding:1rem;border:1px solid #ccc;border-radius:6px;
+              transition:background 0.3s,color 0.3s">
+    <p style="margin:0">This box responds to dark mode.</p>
+  </div>
+
+  <!-- data-rq-attr-* -->
+  <p style="margin-top:1rem">
+    <a data-rq-attr-href="url" data-rq-text="linkLabel"
+       target="_blank" rel="noopener"></a>
+  </p>
+
+  <!-- data-rq-on-* + actions -->
+  <div style="display:flex;gap:0.5rem;margin-top:1rem">
+    <button data-rq-on-click="clearName">Clear name</button>
+    <button data-rq-on-click="resetAll">Reset all</button>
+  </div>
+
+  <!-- data-rq-each -->
+  <h3 style="margin-bottom:0.4rem">Tags:</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+    <template data-rq-each="tags">
+      <li data-rq-text="value"></li>
+    </template>
+  </ul>
+</div>
+
+<style>
+  .dark { background: #1e1e1e; color: #e0e0e0; border-color: #555 !important; }
+</style>`}
+  js={`$('#app').rqState({
+  heading:   'DOM Bindings Demo',
+  name:      'World',
+  dark:      false,
+  url:       'https://github.com/peterbenoit/requery',
+  linkLabel: 'View reQuery on GitHub',
+  tags:      ['data-rq-text', 'data-rq-val', 'data-rq-show',
+              'data-rq-class-*', 'data-rq-attr-*', 'data-rq-each'],
+}, {
+  actions: {
+    clearName: function()      { return { name: '' }; },
+    resetAll:  function()      { return { name: 'World', dark: false }; },
+  },
+});`}
+/>

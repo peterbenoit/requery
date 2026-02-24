@@ -4,8 +4,20 @@ description: How reQuery scopes reactive state to individual DOM elements using 
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import PlainEnglish from '../../../components/PlainEnglish.astro';
+import CodePenButton from '../../../components/CodePenButton.astro';
 
-In most reactive frameworks, state lives in a global store or component tree. reQuery takes a different approach: **state is scoped to a specific DOM element**.
+In most reactive frameworks, state lives in a global store or component tree. reQuery takes a different approach: **state is scoped to a specific DOM element**. Each `rqState()` call creates an isolated pocket of state tied to one DOM node — separate elements don't share or interfere with each other's data.
+
+<PlainEnglish>
+
+Imagine each piece of your page has its own **notebook**. The `#sidebar` has one notebook, `#counter` has another. When you write something in the counter's notebook, the sidebar's notebook is completely unaffected.
+
+This also means you can reuse the same key names (like `count`) in different parts of the page without any collisions. They each look inside their own notebook — never anyone else's.
+
+As a bonus: when you remove an element from the page, its notebook gets thrown away automatically. No cleanup required.
+
+</PlainEnglish>
 
 ## How it works
 
@@ -72,3 +84,52 @@ Internally, each element's state record has three sections:
 | `computed` | Map of `key → Function` for `rqComputed` definitions |
 
 None of these are accessible directly — use the `$.fn.rq*` methods to interact with state.
+
+---
+
+## Full example
+
+Two independent counters on the same page — they share the same action functions and the same key name (`count`), but they never interfere with each other.
+
+<CodePenButton
+  title="reQuery — State Scoping (two independent counters)"
+  html={`<div style="display:flex;gap:2rem;padding:1.5rem;font-family:sans-serif;flex-wrap:wrap">
+  <div id="counter-a" style="border:2px solid steelblue;padding:1.2rem 1.5rem;
+                              border-radius:10px;min-width:140px;text-align:center">
+    <h3 style="margin-top:0;color:steelblue">Counter A</h3>
+    <p style="font-size:2rem;margin:0.4rem 0"><strong data-rq-text="count"></strong></p>
+    <div style="display:flex;gap:0.5rem;justify-content:center">
+      <button data-rq-on-click="dec" style="padding:0.3rem 0.8rem;font-size:1rem">−</button>
+      <button data-rq-on-click="inc" style="padding:0.3rem 0.8rem;font-size:1rem">+</button>
+    </div>
+    <button data-rq-on-click="reset"
+            style="margin-top:0.5rem;font-size:0.8rem;padding:0.2rem 0.6rem">
+      Reset
+    </button>
+  </div>
+
+  <div id="counter-b" style="border:2px solid tomato;padding:1.2rem 1.5rem;
+                              border-radius:10px;min-width:140px;text-align:center">
+    <h3 style="margin-top:0;color:tomato">Counter B</h3>
+    <p style="font-size:2rem;margin:0.4rem 0"><strong data-rq-text="count"></strong></p>
+    <div style="display:flex;gap:0.5rem;justify-content:center">
+      <button data-rq-on-click="dec" style="padding:0.3rem 0.8rem;font-size:1rem">−</button>
+      <button data-rq-on-click="inc" style="padding:0.3rem 0.8rem;font-size:1rem">+</button>
+    </div>
+    <button data-rq-on-click="reset"
+            style="margin-top:0.5rem;font-size:0.8rem;padding:0.2rem 0.6rem">
+      Reset
+    </button>
+  </div>
+</div>`}
+  js={`// The same actions object is reused — state is scoped, not shared.
+var actions = {
+  inc:   function(state) { return { count: state.count + 1 }; },
+  dec:   function(state) { return { count: Math.max(0, state.count - 1) }; },
+  reset: function()      { return { count: 0 }; },
+};
+
+// Each element gets its own completely independent state record.
+$('#counter-a').rqState({ count: 0 }, { actions: actions });
+$('#counter-b').rqState({ count: 0 }, { actions: actions });`}
+/>

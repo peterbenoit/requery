@@ -1,0 +1,114 @@
+---
+/**
+ * PlainEnglish — a collapsible "Plain English" explanation block.
+ * Aimed at jQuery devs who are less familiar with reactive concepts.
+ *
+ * Usage in MDX:
+ *   import PlainEnglish from '../../../components/PlainEnglish.astro';
+ *   <PlainEnglish>
+ *     Your plain-English explanation here. MDX content works.
+ *   </PlainEnglish>
+ *
+ * Optional prop:
+ *   title — override the summary label (default: "Plain English")
+ */
+interface Props {
+  title?: string;
+}
+
+const { title = 'Plain English' } = Astro.props;
+---
+
+<details class="plain-english">
+  <summary>
+    <span class="pe-icon" aria-hidden="true">💬</span>
+    {title}
+  </summary>
+  <div class="pe-body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .plain-english {
+    border: 1px solid var(--sl-color-blue-low, #93c5fd);
+    border-radius: 0.5rem;
+    margin: 1.25rem 0;
+    background: var(--sl-color-bg-sidebar, #f0f7ff);
+    overflow: hidden;
+  }
+
+  :global([data-theme='dark']) .plain-english {
+    background: color-mix(in sRGB, var(--sl-color-blue-low, #1e3a5f) 15%, transparent);
+    border-color: color-mix(in sRGB, var(--sl-color-blue-low, #93c5fd) 40%, transparent);
+  }
+
+  .plain-english summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    color: var(--sl-color-text-accent, #1d4ed8);
+  }
+
+  :global([data-theme='dark']) .plain-english summary {
+    color: var(--sl-color-text-accent, #93c5fd);
+  }
+
+  /* Hide the default disclosure triangle in all browsers */
+  .plain-english summary::-webkit-details-marker { display: none; }
+
+  /* Custom arrow that rotates open */
+  .plain-english summary::after {
+    content: '▸';
+    margin-left: auto;
+    transition: transform 0.2s;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  .plain-english[open] summary::after {
+    transform: rotate(90deg);
+  }
+
+  .plain-english summary:hover {
+    background: color-mix(in sRGB, var(--sl-color-blue-low, #93c5fd) 15%, transparent);
+  }
+
+  .pe-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .pe-body {
+    padding: 0.75rem 1.1rem 0.9rem;
+    border-top: 1px solid color-mix(in sRGB, var(--sl-color-blue-low, #93c5fd) 40%, transparent);
+    font-size: 0.93rem;
+    line-height: 1.65;
+  }
+
+  .pe-body :global(p:first-child) { margin-top: 0; }
+  .pe-body :global(p:last-child)  { margin-bottom: 0; }
+
+  .pe-body :global(ol),
+  .pe-body :global(ul) {
+    padding-left: 1.4rem;
+    margin: 0.5rem 0;
+  }
+
+  .pe-body :global(li + li) {
+    margin-top: 0.3rem;
+  }
+
+  .pe-body :global(code) {
+    font-size: 0.85em;
+    background: color-mix(in sRGB, var(--sl-color-blue-low, #93c5fd) 20%, transparent);
+    padding: 0.1em 0.35em;
+    border-radius: 0.25em;
+  }
+</style>

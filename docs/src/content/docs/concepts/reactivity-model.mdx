@@ -4,6 +4,18 @@ description: How rqWatch and rqComputed work, and their known limitations.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import PlainEnglish from '../../../components/PlainEnglish.astro';
+import CodePenButton from '../../../components/CodePenButton.astro';
+
+reQuery lets you run your own code whenever a state value changes (`rqWatch`) and lets you define values that are calculated from other values (`rqComputed`). This page explains how both work — and one important gotcha to know upfront.
+
+<PlainEnglish>
+
+Think of **watchers** like setting up a phone notification. You tell reQuery: *"whenever the price changes, let me know."* Your callback runs automatically every time that value is updated — you don't have to check yourself.
+
+Think of **computed values** like a formula written on a sticky note. The note says *"price × qty"* but it doesn't show you the answer by itself. You have to pick it up and read it (`rqGet`) to get the current result. Crucially, **the sticky note doesn't update your whiteboard automatically** — that's your job. If you want the DOM to show the latest computed value, you need to call `rqSet` to push it there.
+
+</PlainEnglish>
 
 ## Watchers
 
@@ -92,3 +104,63 @@ $('#app').rqSet('count', 5); // no-op — nothing happens
 <Aside type="note">
   `Object.is` is a strict identity check. For objects and arrays, two different references are never `Object.is`-equal even if their contents are the same. Use `rqMutate` return-same-reference patterns carefully, or accept that object/array updates will always trigger.
 </Aside>
+
+---
+
+## Full example
+
+A price calculator using `rqWatch` to keep a computed total in sync with the DOM.
+
+<CodePenButton
+  title="reQuery — Reactivity Model (watch + computed)"
+  html={`<div id="app" style="padding:1.5rem;font-family:sans-serif;max-width:340px">
+  <h2 style="margin-top:0">Price Calculator</h2>
+  <div style="display:grid;gap:0.6rem;margin-bottom:1rem">
+    <label>
+      Price ($)
+      <input type="number" data-rq-val="price" min="0" step="1"
+             style="width:100%;padding:0.3rem;font-size:1rem" />
+    </label>
+    <label>
+      Quantity
+      <input type="number" data-rq-val="qty" min="1" step="1"
+             style="width:100%;padding:0.3rem;font-size:1rem" />
+    </label>
+  </div>
+  <p style="font-size:1.3rem">
+    Total: <strong>$<span data-rq-text="total"></span></strong>
+  </p>
+  <p data-rq-show="isExpensive" style="color:tomato;font-weight:bold">
+    ⚠ That's over $100!
+  </p>
+  <div style="border:1px solid #ccc;border-radius:6px;padding:0.6rem;
+              height:100px;overflow:auto;font-size:0.8rem" id="log">
+    <em>Changes will appear here…</em>
+  </div>
+</div>`}
+  js={`function log(msg) {
+  var d = document.createElement('div');
+  d.textContent = msg;
+  $('#log').append(d);
+  $('#log').scrollTop($('#log')[0].scrollHeight);
+}
+
+function recalc() {
+  var price = $('#app').rqGet('price');
+  var qty   = $('#app').rqGet('qty');
+  var total = (price * qty).toFixed(2);
+  $('#app').rqSet('total', total);
+  $('#app').rqSet('isExpensive', price * qty > 100);
+}
+
+$('#app')
+  .rqState({ price: 10, qty: 1, total: '10.00', isExpensive: false })
+  .rqWatch('price', function(newVal, oldVal) {
+    log('price changed: ' + oldVal + ' → ' + newVal);
+    recalc();
+  })
+  .rqWatch('qty', function(newVal, oldVal) {
+    log('qty changed: ' + oldVal + ' → ' + newVal);
+    recalc();
+  });`}
+/>

@@ -4,8 +4,22 @@ description: What happens between calling rqSet() and the DOM updating.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import PlainEnglish from '../../../components/PlainEnglish.astro';
+import CodePenButton from '../../../components/CodePenButton.astro';
 
-Understanding the update flow helps you reason about timing, watchers, and side effects.
+Understanding the update flow helps you reason about timing, watchers, and side effects. Every time you change a value, reQuery follows the same predictable sequence of steps — no surprises, no async delays.
+
+<PlainEnglish>
+
+When you call `rqSet('count', 5)`, think of it like flipping a light switch. The moment you flip it, three things happen **in order, immediately**:
+
+1. **The new value is saved.** reQuery records `count = 5`.
+2. **Any watchers are called.** If you set up a `rqWatch('count', ...)` callback, it fires right now, before anything else.
+3. **The HTML updates.** Any element with `data-rq-text="count"` (or `data-rq-show`, `data-rq-class-*`, etc.) gets updated on the page.
+
+By the time the next line of your code runs, all of that has already happened. There's no waiting, no setTimeout, no "it'll update soon."
+
+</PlainEnglish>
 
 ## The update pipeline
 
@@ -77,3 +91,57 @@ The state-to-DOM direction (when `rqSet` is called programmatically) and the DOM
 <Aside type="caution">
   List rendering is a **full clear and re-render** on every update. There is no diffing or keying. For large lists that change frequently, be mindful of the re-render cost.
 </Aside>
+
+---
+
+## Full example
+
+This demo makes the update pipeline visible. Click the button and watch the log — the watcher fires and the DOM updates before `rqSet()` even returns.
+
+<CodePenButton
+  title="reQuery — Binding Lifecycle (synchronous update pipeline)"
+  html={`<div id="app" style="padding:1.5rem;font-family:sans-serif;max-width:420px">
+  <h2 style="margin-top:0">Update Pipeline Demo</h2>
+
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem">
+    <button id="btn-inc"
+            style="padding:0.4rem 1rem;font-size:1rem;cursor:pointer">
+      Increment
+    </button>
+    <span>Count: <strong data-rq-text="count"></strong></span>
+    <span data-rq-show="isHigh"
+          style="color:tomato;font-weight:bold;display:none">
+      ⚠ High!
+    </span>
+  </div>
+
+  <div id="log"
+       style="border:1px solid #ccc;border-radius:6px;padding:0.6rem;
+              height:140px;overflow:auto;font-size:0.8rem;line-height:1.5">
+    <em style="color:#888">Log appears here…</em>
+  </div>
+</div>`}
+  js={`function log(msg) {
+  var d = document.createElement('div');
+  d.textContent = msg;
+  $('#log em').remove();
+  $('#log').append(d);
+  $('#log').scrollTop($('#log')[0].scrollHeight);
+}
+
+$('#app')
+  .rqState({ count: 0, isHigh: false })
+  .rqWatch('count', function(newVal, oldVal) {
+    // This fires DURING rqSet, before it returns.
+    log('  └ watcher: count changed ' + oldVal + ' → ' + newVal);
+    $('#app').rqSet('isHigh', newVal >= 5);
+  });
+
+$('#btn-inc').on('click', function() {
+  var current = $('#app').rqGet('count');
+  log('rqSet("count", ' + (current + 1) + ') called…');
+  $('#app').rqSet('count', current + 1);
+  // By this line, the DOM and watchers have already run.
+  log('  rqSet returned — DOM is already up to date');
+});`}
+/>

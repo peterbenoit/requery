@@ -1,0 +1,18 @@
+/* TEAM */
+Developer: Peter Benoit
+Site: https://peterbenoit.com
+GitHub: https://github.com/peterbenoit
+
+/* THANKS */
+jQuery team — for keeping the DOM sane since 2006.
+Astro & Starlight — for making docs actually fun to write.
+The open source community — for everything else.
+
+/* SITE */
+Language: English
+Doctype: HTML5
+Standards: HTML5, CSS3, ES2020+
+IDE: Visual Studio Code
+Built with: Astro, Starlight
+Hosted on: Vercel
+Last updated: 2026-02-24

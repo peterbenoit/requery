@@ -316,3 +316,8 @@ Requires jQuery 4+ (which itself requires modern browsers — no IE). reQuery is
 ## License
 
 [MIT](LICENSE) © 2026 Peter Benoit
+
+## Author
+
+Created by [Peter Benoit](https://www.peterbenoit.com)
+

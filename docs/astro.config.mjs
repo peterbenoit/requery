@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://requery.vercel.app/',
+	site: 'https://requeryjs.com/',
 	integrations: [
 		starlight({
 			title: 'reQuery',

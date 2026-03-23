@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>.rqWatch() — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html" class="active">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>.rqWatch()</h1>
+			<p class="lead">
+				Run a function every time a specific state key changes. Use this when you
+				need to do something that a simple <code>data-rq-text</code> attribute
+				can't do — like sending a request, playing a sound, or writing to a log.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>$(selector)<strong>.rqWatch</strong>( key, function(newValue, oldValue) { … } )</div>
+		</div>
+
+		<h2>Parameters</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Type</th>
+					<th>Required</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>key</td>
+					<td>string</td>
+					<td>yes</td>
+					<td>The state key to watch.</td>
+				</tr>
+				<tr>
+					<td>fn</td>
+					<td>function</td>
+					<td>yes</td>
+					<td>Called as <code>fn(newValue, oldValue)</code> every time that key changes.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="returns">
+			<strong>Returns:</strong> the jQuery object (chainable)
+		</div>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Show a message when a counter reaches a milestone</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ count: 0 });
+
+$('#app').rqWatch('count', function (newVal) {
+  if (newVal >= 5) {
+    $('#milestone').text('You reached 5! 🎉');
+  } else {
+    $('#milestone').text('');
+  }
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — reach 5 to trigger the watcher</div>
+				<div id="ex1">
+					<div class="demo-row">
+						<button class="ex1-dec">−1</button>
+						<span class="val-display" data-rq-text="count"></span>
+						<button class="ex1-inc">+1</button>
+					</div>
+					<p id="ex1-milestone" style="color:#16a34a;font-weight:600;margin-top:0.5rem"></p>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Log every change with old and new values</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ username: '' });
+
+$('#app').rqWatch('username', function (newVal, oldVal) {
+  console.log('Changed from "' + oldVal + '" to "' + newVal + '"');
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — type to see the change log</div>
+				<div id="ex2">
+					<div class="demo-row">
+						<input type="text" data-rq-val="username" placeholder="Type a username…" />
+					</div>
+					<div class="log-output" id="ex2-log">
+						<p style="color:#9ca3af">Start typing…</p>
+					</div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="note-box">
+			<strong>Tip:</strong> The watcher runs <em>after</em> the DOM has already been updated with the new value.
+			So if you need to do something based on the new value that's not just showing text, <code>.rqWatch()</code>
+			is the right tool.
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqcomputed.html">.rqComputed()</a>
+				<a href="rqstate.html">onChange option in rqState</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1').rqState({ count: 0 });
+		$('#ex1').rqWatch('count', function (newVal) {
+			if (newVal >= 5) {
+				$('#ex1-milestone').text('You reached 5! 🎉');
+			} else {
+				$('#ex1-milestone').text('');
+			}
+		});
+		$('#ex1').on('click', '.ex1-inc', function () {
+			$('#ex1').rqMutate('count', function (n) { return n + 1; });
+		});
+		$('#ex1').on('click', '.ex1-dec', function () {
+			$('#ex1').rqMutate('count', function (n) { return Math.max(0, n - 1); });
+		});
+
+		// ── Demo 2
+		$('#ex2').rqState({ username: '' });
+		$('#ex2').rqWatch('username', function (newVal, oldVal) {
+			var msg = '<p>"' + (oldVal || '') + '" → "' + newVal + '"</p>';
+			$('#ex2-log').prepend(msg);
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — rqWatch milestone',
+				html: '<div id="app">\n  <button id="dec">−1</button>\n  <span data-rq-text="count"></span>\n  <button id="inc">+1</button>\n  <p id="milestone"></p>\n</div>',
+				js: '$(\'#app\').rqState({ count: 0 });\n\n$(\'#app\').rqWatch(\'count\', function (newVal) {\n  if (newVal >= 5) {\n    $(\'#milestone\').text(\'You reached 5! 🎉\');\n  } else {\n    $(\'#milestone\').text(\'\');\n  }\n});\n\n$(\'#inc\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'count\', function (n) { return n + 1; });\n});\n$(\'#dec\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'count\', function (n) { return Math.max(0, n - 1); });\n});'
+			},
+			2: {
+				title: 'reQuery — rqWatch change log',
+				html: '<div id="app">\n  <input type="text" data-rq-val="username" placeholder="Type a username…" />\n  <div id="log"></div>\n</div>',
+				js: '$(\'#app\').rqState({ username: \'\' });\n\n$(\'#app\').rqWatch(\'username\', function (newVal, oldVal) {\n  $(\'#log\').prepend(\'<p>"\' + (oldVal || \'\') + \'" → "\' + newVal + \'"</p>\');\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example', html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>.rqDestroy() — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html" class="active">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>.rqDestroy()</h1>
+			<p class="lead">
+				Remove all reactive state from an element and disconnect all its event
+				listeners. After this, the element is just plain HTML again — as if
+				<code>.rqState()</code> was never called.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>$(selector)<strong>.rqDestroy</strong>()</div>
+		</div>
+
+		<h2>Parameters</h2>
+		<p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:2rem">None. This method takes no arguments.
+		</p>
+
+		<div class="returns">
+			<strong>Returns:</strong> the jQuery object (chainable)
+		</div>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Destroy and reinitialize</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ count: 0 });
+
+$('#destroy-btn').on('click', function () {
+  $('#app').rqDestroy();
+  // The element still exists, but reQuery is gone
+  // You can call .rqState() again to start fresh
+});
+
+$('#reinit-btn').on('click', function () {
+  $('#app').rqState({ count: 0 });
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — destroy removes reactivity; reinit brings it back</div>
+				<div id="ex1">
+					<div class="demo-row">
+						<span>Count: <span class="val-display" data-rq-text="count"></span></span>
+						<button class="ex1-inc">+1</button>
+					</div>
+					<div class="demo-row" style="margin-top:0.5rem">
+						<button class="ex1-destroy btn-danger">Destroy</button>
+						<button class="ex1-reinit">Reinitialize</button>
+					</div>
+					<p id="ex1-status" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem"></p>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="note-box">
+			<strong>When would you use this?</strong> Mostly in single-page apps where you load and unload sections of
+			the page dynamically. If a widget is removed from the DOM, calling
+			<code>.rqDestroy()</code> first ensures any watchers and handlers are properly cleaned up.
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqreset.html">.rqReset()</a>
+				<a href="rqstate.html">.rqState()</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1').rqState({ count: 0 });
+
+		$('#ex1').on('click', '.ex1-inc', function () {
+			if ($('#ex1').rqGet('count') === undefined) {
+				$('#ex1-status').text('State is destroyed — reinitialize first.');
+				return;
+			}
+			$('#ex1').rqMutate('count', function (n) { return n + 1; });
+		});
+
+		$('#ex1').on('click', '.ex1-destroy', function () {
+			$('#ex1').rqDestroy();
+			$('#ex1-status').text('✗ State destroyed. The +1 button no longer works.');
+			$('[data-rq-text]', '#ex1').text('—');
+		});
+
+		$('#ex1').on('click', '.ex1-reinit', function () {
+			$('#ex1').rqState({ count: 0 });
+			$('#ex1-status').text('✓ Reinitialized with count: 0');
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — rqDestroy',
+				html: '<div id="app">\n  <p>Count: <span data-rq-text="count"></span></p>\n  <button id="inc">+1</button>\n  <button id="destroy">Destroy</button>\n  <button id="reinit">Reinitialize</button>\n  <p id="status"></p>\n</div>',
+				js: '$(\'#app\').rqState({ count: 0 });\n\n$(\'#inc\').on(\'click\', function () {\n  if ($(\'#app\').rqGet(\'count\') === undefined) {\n    $(\'#status\').text(\'Destroyed — reinit first\');\n    return;\n  }\n  $(\'#app\').rqMutate(\'count\', function (n) { return n + 1; });\n});\n\n$(\'#destroy\').on(\'click\', function () {\n  $(\'#app\').rqDestroy();\n  $(\'#status\').text(\'State destroyed.\');\n});\n\n$(\'#reinit\').on(\'click\', function () {\n  $(\'#app\').rqState({ count: 0 });\n  $(\'#status\').text(\'Reinitialized.\');\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example', html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>data-rq-each — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html" class="active">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>data-rq-each</h1>
+			<p class="lead">
+				Render a list from an array in state. Put a <code>&lt;template&gt;</code>
+				in your HTML, give it <code>data-rq-each</code>, and reQuery will stamp
+				out one copy of the template for every item in the array. When the array
+				changes, the list re-renders automatically.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>&lt;template <strong>data-rq-each="</strong>key<strong>"</strong>&gt;</div>
+			<div>&nbsp;&nbsp;…item template…</div>
+			<div>&lt;/template&gt;</div>
+		</div>
+
+		<h2>What's available inside the template</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>Array item type</th>
+					<th>Keys you can bind to inside the template</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Plain values (<code>"hello"</code>, <code>42</code>)</td>
+					<td><code>value</code> — the item itself<br /><code>$index</code> — the item's position (0-based)
+					</td>
+				</tr>
+				<tr>
+					<td>Objects (<code>{ name: "Alice" }</code>)</td>
+					<td>Any key on the object directly (e.g. <code>name</code>,
+						<code>email</code>)<br /><code>$index</code> — position</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Simple text list</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;input id="item-input" type="text" placeholder="Add a fruit…" /&gt;
+  &lt;button id="add-btn"&gt;Add&lt;/button&gt;
+
+  &lt;ul&gt;
+    &lt;template data-rq-each="fruits"&gt;
+      &lt;li&gt;&lt;span data-rq-text="value"&gt;&lt;/span&gt;&lt;/li&gt;
+    &lt;/template&gt;
+  &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ fruits: ['Apple', 'Banana', 'Cherry'] });
+
+$('#add-btn').on('click', function () {
+  var input = $('#item-input');
+  var text = input.val().trim();
+  if (!text) return;
+
+  $('#app').rqMutate('fruits', function (list) {
+    return [...list, text];
+  });
+
+  input.val('');
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — add items to the list</div>
+				<div id="ex1">
+					<div class="demo-row" style="margin-bottom:0.75rem">
+						<input id="ex1-input" type="text" placeholder="Add a fruit…"
+							style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:5px;font-size:0.875rem" />
+						<button id="ex1-add"
+							style="padding:0.35rem 0.8rem;background:#6366f1;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:0.875rem">Add</button>
+					</div>
+					<ul id="ex1-list" style="margin:0;padding-left:1.25rem;font-size:0.875rem">
+						<template data-rq-each="fruits">
+							<li><span data-rq-text="value"></span></li>
+						</template>
+					</ul>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Object array — team roster</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;&lt;th&gt;Name&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;template data-rq-each="team"&gt;
+        &lt;tr&gt;
+          &lt;td data-rq-text="name"&gt;&lt;/td&gt;
+          &lt;td data-rq-text="role"&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/template&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+
+  &lt;button id="add-member"&gt;Add member&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({
+  team: [
+    { name: 'Alice', role: 'Designer' },
+    { name: 'Bob',   role: 'Developer' }
+  ]
+});
+
+var newMembers = [
+  { name: 'Carol', role: 'Manager' },
+  { name: 'Dave',  role: 'QA' }
+];
+var i = 0;
+
+$('#add-member').on('click', function () {
+  if (i >= newMembers.length) return;
+  $('#app').rqMutate('team', function (list) {
+    return [...list, newMembers[i++]];
+  });
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — click to add a team member</div>
+				<div id="ex2">
+					<table style="width:100%;border-collapse:collapse;font-size:0.875rem;margin-bottom:0.75rem">
+						<thead>
+							<tr>
+								<th
+									style="text-align:left;padding:0.35rem 0.6rem;border-bottom:1px solid #e2e8f0;color:#64748b;font-weight:500">
+									Name</th>
+								<th
+									style="text-align:left;padding:0.35rem 0.6rem;border-bottom:1px solid #e2e8f0;color:#64748b;font-weight:500">
+									Role</th>
+							</tr>
+						</thead>
+						<tbody>
+							<template data-rq-each="team">
+								<tr>
+									<td data-rq-text="name"
+										style="padding:0.35rem 0.6rem;border-bottom:1px solid #f1f5f9"></td>
+									<td data-rq-text="role"
+										style="padding:0.35rem 0.6rem;border-bottom:1px solid #f1f5f9;color:#64748b">
+									</td>
+								</tr>
+							</template>
+						</tbody>
+					</table>
+					<button id="ex2-add"
+						style="padding:0.35rem 0.8rem;background:#6366f1;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:0.875rem">Add
+						member</button>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqmutate.html">.rqMutate()</a>
+				<a href="data-rq-text.html">data-rq-text</a>
+				<a href="data-rq-on.html">data-rq-on-*</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1').rqState({ fruits: ['Apple', 'Banana', 'Cherry'] });
+		$('#ex1-add').on('click', function () {
+			var input = $('#ex1-input');
+			var text = input.val().trim();
+			if (!text) return;
+			$('#ex1').rqMutate('fruits', function (list) {
+				return list.concat([text]);
+			});
+			input.val('');
+		});
+		$('#ex1-input').on('keydown', function (e) {
+			if (e.key === 'Enter') $('#ex1-add').trigger('click');
+		});
+
+		// ── Demo 2
+		$('#ex2').rqState({
+			team: [
+				{ name: 'Alice', role: 'Designer' },
+				{ name: 'Bob', role: 'Developer' }
+			]
+		});
+		var newMembers = [
+			{ name: 'Carol', role: 'Manager' },
+			{ name: 'Dave', role: 'QA' }
+		];
+		var memberIdx = 0;
+		$('#ex2-add').on('click', function () {
+			if (memberIdx >= newMembers.length) {
+				$(this).text('All added!').prop('disabled', true).css({ opacity: 0.5, cursor: 'default' });
+				return;
+			}
+			var next = newMembers[memberIdx++];
+			$('#ex2').rqMutate('team', function (list) {
+				return list.concat([next]);
+			});
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — data-rq-each simple list',
+				html: '<div id="app">\n  <input id="item-input" type="text" placeholder="Add a fruit…" />\n  <button id="add-btn">Add</button>\n  <ul>\n    <template data-rq-each="fruits">\n      <li><span data-rq-text="value"></span></li>\n    </template>\n  </ul>\n</div>',
+				js: '$(\'#app\').rqState({ fruits: [\'Apple\', \'Banana\', \'Cherry\'] });\n\n$(\'#add-btn\').on(\'click\', function () {\n  var input = $(\'#item-input\');\n  var text = input.val().trim();\n  if (!text) return;\n  $(\'#app\').rqMutate(\'fruits\', function (list) {\n    return [...list, text];\n  });\n  input.val(\'\');\n});'
+			},
+			2: {
+				title: 'reQuery — data-rq-each object array',
+				html: '<div id="app">\n  <table>\n    <thead><tr><th>Name</th><th>Role</th></tr></thead>\n    <tbody>\n      <template data-rq-each="team">\n        <tr>\n          <td data-rq-text="name"></td>\n          <td data-rq-text="role"></td>\n        </tr>\n      </template>\n    </tbody>\n  </table>\n  <br>\n  <button id="add-member">Add member</button>\n</div>',
+				js: '$(\'#app\').rqState({\n  team: [\n    { name: \'Alice\', role: \'Designer\' },\n    { name: \'Bob\',   role: \'Developer\' }\n  ]\n});\nvar newMembers = [\n  { name: \'Carol\', role: \'Manager\' },\n  { name: \'Dave\',  role: \'QA\' }\n];\nvar i = 0;\n$(\'#add-member\').on(\'click\', function () {\n  if (i >= newMembers.length) return;\n  $(\'#app\').rqMutate(\'team\', function (list) {\n    return [...list, newMembers[i++]];\n  });\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example', html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

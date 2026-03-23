@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>.rqComputed() — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html" class="active">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>.rqComputed()</h1>
+			<p class="lead">
+				Create a value that is automatically calculated from other state values.
+				Instead of storing it separately and remembering to update it, you just
+				describe how to calculate it — reQuery keeps it current.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>$(selector)<strong>.rqComputed</strong>( key, function(state) { return derivedValue; } )</div>
+		</div>
+
+		<h2>Parameters</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Type</th>
+					<th>Required</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>key</td>
+					<td>string</td>
+					<td>yes</td>
+					<td>The name for this computed value. Use it in <code>data-rq-text</code> etc. just like a regular
+						state key.</td>
+				</tr>
+				<tr>
+					<td>fn</td>
+					<td>function</td>
+					<td>yes</td>
+					<td>Receives the full state object. Return the computed value you want to show.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="returns">
+			<strong>Returns:</strong> the jQuery object (chainable)
+		</div>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Full name from first + last</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app')
+  .rqState({ first: 'Ada', last: 'Lovelace' })
+  .rqComputed('fullName', function (state) {
+    return state.first + ' ' + state.last;
+  });</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — edit either field</div>
+				<div id="ex1">
+					<div class="demo-row">
+						<div>
+							<label>First</label>
+							<input type="text" data-rq-val="first" />
+						</div>
+						<div>
+							<label>Last</label>
+							<input type="text" data-rq-val="last" />
+						</div>
+					</div>
+					<p>Full name: <strong data-rq-text="fullName"></strong></p>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Total price from quantity × price</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app')
+  .rqState({ qty: 1, price: 9.99 })
+  .rqComputed('total', function (state) {
+    return '$' + (state.qty * state.price).toFixed(2);
+  });</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo</div>
+				<div id="ex2">
+					<div class="demo-row">
+						<div>
+							<label>Qty</label>
+							<input type="number" data-rq-val="qty" min="1" style="max-width:70px" />
+						</div>
+						<div>
+							<label>Price ($)</label>
+							<input type="number" data-rq-val="price" min="0" step="0.01" style="max-width:90px" />
+						</div>
+					</div>
+					<p>Total: <strong data-rq-text="total"></strong></p>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="note-box">
+			<strong>How it works:</strong> Every time <em>any</em> state key changes, reQuery re-runs your computed
+			function and updates the DOM if the result is different. You don't need to do anything — just use the
+			computed key name in your HTML like any other key.
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqwatch.html">.rqWatch()</a>
+				<a href="data-rq-text.html">data-rq-text</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1')
+			.rqState({ first: 'Ada', last: 'Lovelace' })
+			.rqComputed('fullName', function (state) {
+				return state.first + ' ' + state.last;
+			});
+
+		// ── Demo 2
+		$('#ex2')
+			.rqState({ qty: 1, price: 9.99 })
+			.rqComputed('total', function (state) {
+				var q = parseFloat(state.qty) || 0;
+				var p = parseFloat(state.price) || 0;
+				return '$' + (q * p).toFixed(2);
+			});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — rqComputed full name',
+				html: '<div id="app">\n  <input type="text" data-rq-val="first" placeholder="First" />\n  <input type="text" data-rq-val="last" placeholder="Last" />\n  <p>Full name: <strong data-rq-text="fullName"></strong></p>\n</div>',
+				js: '$(\'#app\')\n  .rqState({ first: \'Ada\', last: \'Lovelace\' })\n  .rqComputed(\'fullName\', function (state) {\n    return state.first + \' \' + state.last;\n  });'
+			},
+			2: {
+				title: 'reQuery — rqComputed total price',
+				html: '<div id="app">\n  <input type="number" data-rq-val="qty" min="1" value="1" />\n  <input type="number" data-rq-val="price" min="0" step="0.01" value="9.99" />\n  <p>Total: <strong data-rq-text="total"></strong></p>\n</div>',
+				js: '$(\'#app\')\n  .rqState({ qty: 1, price: 9.99 })\n  .rqComputed(\'total\', function (state) {\n    return \'$\' + (state.qty * state.price).toFixed(2);\n  });'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example', html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

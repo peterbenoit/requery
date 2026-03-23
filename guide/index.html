@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>reQuery Guide — Learn by Example</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain active">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1 class="plain-title">reQuery Guide</h1>
+			<p class="lead">Examples for every method and attribute. If you know jQuery, you already know most of this.
+			</p>
+		</div>
+
+		<div class="hero-intro">
+			<h2>The idea in one sentence</h2>
+			<p>
+				You tell reQuery what your data looks like, put <code>data-rq-text</code> (or similar) attributes
+				on the HTML elements that should show it, and from then on calling <code>.rqSet()</code> updates
+				the page automatically — no manual DOM hunting required.
+			</p>
+		</div>
+
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">▶</span>
+				<h3>A 9-line counter</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="counter"&gt;
+  &lt;p&gt;Count: &lt;span data-rq-text="count"&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;button id="inc"&gt;+1&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top: 1px solid #2d2f55; border-radius: 0; margin-top: -1px;">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#counter').rqState({ count: 0 });
+
+$('#inc').on('click', function () {
+  $('#counter').rqMutate('count', function (n) { return n + 1; });
+});</code></pre>
+			</div>
+			<div class="demo-box" id="intro-demo">
+				<div class="demo-label">Live demo</div>
+				<div class="demo-row">
+					<span>Count: <span class="val-display" data-rq-text="count"></span></span>
+					<button id="intro-inc">+1</button>
+					<button id="intro-reset">Reset</button>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpIntro()">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<h2>Plugin Methods</h2>
+		<div class="card-grid">
+			<a href="rqstate.html" class="card-link">
+				<div class="card-name">.rqState()</div>
+				<div class="card-desc">Set up your data on an element</div>
+			</a>
+			<a href="rqget.html" class="card-link">
+				<div class="card-name">.rqGet()</div>
+				<div class="card-desc">Read the current value of a key</div>
+			</a>
+			<a href="rqset.html" class="card-link">
+				<div class="card-name">.rqSet()</div>
+				<div class="card-desc">Change a value and update the page</div>
+			</a>
+			<a href="rqmutate.html" class="card-link">
+				<div class="card-name">.rqMutate()</div>
+				<div class="card-desc">Update a value based on what it already is</div>
+			</a>
+			<a href="rqwatch.html" class="card-link">
+				<div class="card-name">.rqWatch()</div>
+				<div class="card-desc">Run code whenever a value changes</div>
+			</a>
+			<a href="rqcomputed.html" class="card-link">
+				<div class="card-name">.rqComputed()</div>
+				<div class="card-desc">Derive a value from other values</div>
+			</a>
+			<a href="rqreset.html" class="card-link">
+				<div class="card-name">.rqReset()</div>
+				<div class="card-desc">Go back to the original values</div>
+			</a>
+			<a href="rqdestroy.html" class="card-link">
+				<div class="card-name">.rqDestroy()</div>
+				<div class="card-desc">Remove all state from an element</div>
+			</a>
+		</div>
+
+		<h2>HTML Attributes</h2>
+		<p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+			Add these attributes to any HTML element inside your root element. reQuery updates them automatically when
+			the matching state key changes.
+		</p>
+		<div class="card-grid">
+			<a href="data-rq-text.html" class="card-link">
+				<div class="card-name">data-rq-text</div>
+				<div class="card-desc">Set the text content of an element</div>
+			</a>
+			<a href="data-rq-html.html" class="card-link">
+				<div class="card-name">data-rq-html</div>
+				<div class="card-desc">Set the HTML content of an element</div>
+			</a>
+			<a href="data-rq-val.html" class="card-link">
+				<div class="card-name">data-rq-val</div>
+				<div class="card-desc">Two-way bind an input field</div>
+			</a>
+			<a href="data-rq-attr.html" class="card-link">
+				<div class="card-name">data-rq-attr-*</div>
+				<div class="card-desc">Set any HTML attribute dynamically</div>
+			</a>
+			<a href="data-rq-class.html" class="card-link">
+				<div class="card-name">data-rq-class-*</div>
+				<div class="card-desc">Toggle a CSS class on or off</div>
+			</a>
+			<a href="data-rq-show.html" class="card-link">
+				<div class="card-name">data-rq-show</div>
+				<div class="card-desc">Show or hide an element</div>
+			</a>
+			<a href="data-rq-each.html" class="card-link">
+				<div class="card-name">data-rq-each</div>
+				<div class="card-desc">Repeat a template for every item in a list</div>
+			</a>
+			<a href="data-rq-on.html" class="card-link">
+				<div class="card-name">data-rq-on-*</div>
+				<div class="card-desc">Wire up events without writing handlers</div>
+			</a>
+		</div>
+
+		<h2>Features</h2>
+		<div class="card-grid">
+			<a href="persist.html" class="card-link">
+				<div class="card-name" style="font-family: system-ui, sans-serif;">Saving Data</div>
+				<div class="card-desc">Keep your state when the page reloads</div>
+			</a>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// Intro demo
+		$('#intro-demo').rqState({ count: 0 });
+		$('#intro-inc').on('click', function () {
+			$('#intro-demo').rqMutate('count', function (n) { return n + 1; });
+		});
+		$('#intro-reset').on('click', function () {
+			$('#intro-demo').rqReset();
+		});
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example',
+				html: html,
+				js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST';
+			f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+
+		function cpIntro() {
+			cpSend(
+				'<div id="counter">\n  <p>Count: <span data-rq-text="count"></span></p>\n  <button id="inc">+1</button>\n  <button id="reset">Reset</button>\n</div>',
+				'$(\'#counter\').rqState({ count: 0 });\n\n$(\'#inc\').on(\'click\', function () {\n  $(\'#counter\').rqMutate(\'count\', function (n) { return n + 1; });\n});\n\n$(\'#reset\').on(\'click\', function () {\n  $(\'#counter\').rqReset();\n});',
+				'reQuery — Counter'
+			);
+		}
+	</script>
+</body>
+
+</html>

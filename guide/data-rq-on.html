@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>data-rq-on-* — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html" class="active">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>data-rq-on-*</h1>
+			<p class="lead">
+				Wire events straight from HTML without writing jQuery selectors. Add
+				<code>data-rq-on-click="myAction"</code> to any element, define
+				<code>myAction</code> in the <code>actions</code> option, and reQuery
+				handles the wiring for you.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>&lt;button <strong>data-rq-on-click="</strong>increment<strong>"</strong>&gt;+&lt;/button&gt;</div>
+			<div>&lt;input <strong>data-rq-on-input="</strong>onType<strong>"</strong> /&gt;</div>
+			<div>&lt;form <strong>data-rq-on-submit="</strong>onSubmit<strong>"</strong>&gt;…&lt;/form&gt;</div>
+		</div>
+
+		<h2>Action function signature</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>Argument</th>
+					<th>What it is</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>state</code></td>
+					<td>The current state object (read-only snapshot)</td>
+				</tr>
+				<tr>
+					<td><code>event</code></td>
+					<td>The native jQuery event object</td>
+				</tr>
+				<tr>
+					<td><code>$root</code></td>
+					<td>The jQuery-wrapped root element (the one you called <code>.rqState()</code> on)</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="returns">
+			Return a plain object with the state keys you want to update, or nothing (undefined)
+			to leave state unchanged.
+		</div>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Counter with named actions</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;button data-rq-on-click="decrement"&gt;−&lt;/button&gt;
+  &lt;span data-rq-text="count"&gt;&lt;/span&gt;
+  &lt;button data-rq-on-click="increment"&gt;+&lt;/button&gt;
+  &lt;button data-rq-on-click="reset"&gt;Reset&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ count: 0 }, {
+  actions: {
+    increment: function (state) {
+      return { count: state.count + 1 };
+    },
+    decrement: function (state) {
+      return { count: state.count - 1 };
+    },
+    reset: function () {
+      return { count: 0 };
+    }
+  }
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — all wiring is in the HTML attributes</div>
+				<div id="ex1">
+					<div class="demo-row" style="gap:0.5rem;align-items:center">
+						<button data-rq-on-click="decrement"
+							style="width:32px;height:32px;border:1px solid #d1d5db;border-radius:5px;background:#fff;cursor:pointer;font-size:1.1rem;line-height:1">−</button>
+						<span class="val-display" data-rq-text="count" style="min-width:40px;text-align:center"></span>
+						<button data-rq-on-click="increment"
+							style="width:32px;height:32px;border:1px solid #d1d5db;border-radius:5px;background:#fff;cursor:pointer;font-size:1.1rem;line-height:1">+</button>
+						<button data-rq-on-click="reset"
+							style="padding:0 0.75rem;height:32px;border:1px solid #d1d5db;border-radius:5px;background:#fff;cursor:pointer;font-size:0.8rem">Reset</button>
+					</div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Form submit action</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;form data-rq-on-submit="save"&gt;
+    &lt;input type="text" data-rq-val="name" placeholder="Your name" /&gt;
+    &lt;button type="submit"&gt;Save&lt;/button&gt;
+  &lt;/form&gt;
+  &lt;p data-rq-show="saved"&gt;
+    Saved! Hello, &lt;strong data-rq-text="name"&gt;&lt;/strong&gt;.
+  &lt;/p&gt;
+&lt;/div&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ name: '', saved: false }, {
+  actions: {
+    save: function (state, event) {
+      event.preventDefault();
+      if (!state.name.trim()) return;
+      return { saved: true };
+    }
+  }
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — fill in your name and click Save</div>
+				<div id="ex2">
+					<form data-rq-on-submit="save" style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+						<input type="text" data-rq-val="name" placeholder="Your name"
+							style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:5px;font-size:0.875rem" />
+						<button type="submit"
+							style="padding:0.35rem 0.8rem;background:#6366f1;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:0.875rem">Save</button>
+					</form>
+					<p data-rq-show="saved" style="color:#16a34a;font-size:0.875rem;margin:0;display:none">
+						Saved! Hello, <strong data-rq-text="name"></strong>.
+					</p>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqstate.html">.rqState()</a>
+				<a href="rqmutate.html">.rqMutate()</a>
+				<a href="data-rq-show.html">data-rq-show</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1').rqState({ count: 0 }, {
+			actions: {
+				increment: function (state) { return { count: state.count + 1 }; },
+				decrement: function (state) { return { count: state.count - 1 }; },
+				reset: function () { return { count: 0 }; }
+			}
+		});
+
+		// ── Demo 2
+		$('#ex2').rqState({ name: '', saved: false }, {
+			actions: {
+				save: function (state, event) {
+					event.preventDefault();
+					if (!state.name.trim()) return;
+					return { saved: true };
+				}
+			}
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — data-rq-on-* counter actions',
+				html: '<div id="app">\n  <button data-rq-on-click="decrement">−</button>\n  <span data-rq-text="count"></span>\n  <button data-rq-on-click="increment">+</button>\n  <button data-rq-on-click="reset">Reset</button>\n</div>',
+				js: '$(\'#app\').rqState({ count: 0 }, {\n  actions: {\n    increment: function (state) { return { count: state.count + 1 }; },\n    decrement: function (state) { return { count: state.count - 1 }; },\n    reset: function () { return { count: 0 }; }\n  }\n});'
+			},
+			2: {
+				title: 'reQuery — data-rq-on-submit form action',
+				html: '<div id="app">\n  <form data-rq-on-submit="save">\n    <input type="text" data-rq-val="name" placeholder="Your name" />\n    <button type="submit">Save</button>\n  </form>\n  <p data-rq-show="saved">Saved! Hello, <strong data-rq-text="name"></strong>.</p>\n</div>',
+				js: '$(\'#app\').rqState({ name: \'\', saved: false }, {\n  actions: {\n    save: function (state, event) {\n      event.preventDefault();\n      if (!state.name.trim()) return;\n      return { saved: true };\n    }\n  }\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example', html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

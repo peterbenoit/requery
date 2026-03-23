@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>data-rq-class-* — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html" class="active">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>data-rq-class-*</h1>
+			<p class="lead">
+				Toggle a CSS class based on a state value. Replace <code>*</code> with the
+				class name — the class is added when the state value is truthy and removed
+				when it's falsy.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>&lt;div <strong>data-rq-class-active="</strong>isActive<strong>"</strong>&gt;…&lt;/div&gt;</div>
+			<div>&lt;input <strong>data-rq-class-error="</strong>hasError<strong>"</strong> /&gt;</div>
+			<div>&lt;button <strong>data-rq-class-loading="</strong>isLoading<strong>"</strong>&gt;…&lt;/button&gt;
+			</div>
+		</div>
+
+		<h2>How it works</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>State value</th>
+					<th>Effect on the class</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>truthy (<code>true</code>, non-zero, non-empty string)</td>
+					<td>Class is <strong>added</strong></td>
+				</tr>
+				<tr>
+					<td>falsy (<code>false</code>, <code>0</code>, <code>null</code>, <code>''</code>)</td>
+					<td>Class is <strong>removed</strong></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Highlight a card on toggle</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;div class="card" data-rq-class-highlighted="on"&gt;
+    This card can be highlighted.
+  &lt;/div&gt;
+  &lt;button id="toggle"&gt;Toggle highlight&lt;/button&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+  .card { padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; }
+  .card.highlighted { border-color: #6366f1; background: #eef2ff; }
+&lt;/style&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ on: false });
+
+$('#toggle').on('click', function () {
+  $('#app').rqMutate('on', function (val) { return !val; });
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — click the button to toggle the class</div>
+				<div id="ex1">
+					<div class="ex1-card" data-rq-class-highlighted="on"
+						style="padding:1rem;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;margin-bottom:0.75rem;transition:border-color 0.2s,background 0.2s">
+						This card can be highlighted.
+					</div>
+					<button id="ex1-toggle"
+						style="padding:0.4rem 1rem;border:1px solid #d1d5db;border-radius:5px;background:#fff;cursor:pointer;font-size:0.875rem">
+						Toggle highlight
+					</button>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Validation error on an input</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;input
+    id="email"
+    type="email"
+    placeholder="Enter email"
+    data-rq-class-input-error="hasError"
+  /&gt;
+  &lt;p data-rq-show="hasError" class="error-msg"&gt;
+    Please enter a valid email.
+  &lt;/p&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+  .input-error { border-color: #ef4444 !important; }
+  .error-msg { color: #ef4444; font-size: 0.8rem; margin-top: 0.25rem; }
+&lt;/style&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ hasError: false });
+
+$('#email').on('blur', function () {
+  var ok = this.value.includes('@');
+  $('#app').rqSet('hasError', !ok);
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — type something without @ and click away</div>
+				<div id="ex2">
+					<input id="ex2-email" type="email" placeholder="Enter email" data-rq-class-input-error="hasError"
+						style="padding:0.4rem 0.6rem;border:1px solid #d1d5db;border-radius:5px;font-size:0.875rem;width:220px;transition:border-color 0.2s" />
+					<p data-rq-show="hasError" class="error-msg"
+						style="color:#ef4444;font-size:0.8rem;margin-top:0.25rem;display:none">
+						Please enter a valid email.
+					</p>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="data-rq-show.html">data-rq-show</a>
+				<a href="data-rq-attr.html">data-rq-attr-*</a>
+				<a href="rqmutate.html">.rqMutate()</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1').rqState({ on: false });
+		$('#ex1-toggle').on('click', function () {
+			$('#ex1').rqMutate('on', function (val) { return !val; });
+		});
+		// Apply inline highlight style via watch
+		$('#ex1').rqWatch('on', function (val) {
+			var card = $('#ex1 .ex1-card');
+			if (val) {
+				card.css({ borderColor: '#6366f1', background: '#eef2ff' });
+			} else {
+				card.css({ borderColor: '#e2e8f0', background: '' });
+			}
+		});
+
+		// ── Demo 2
+		$('#ex2').rqState({ hasError: false });
+		$('#ex2-email').on('blur', function () {
+			var ok = this.value.includes('@');
+			$('#ex2').rqSet('hasError', !ok && this.value.length > 0);
+		});
+		$('#ex2').rqWatch('hasError', function (val) {
+			$('#ex2-email').css('borderColor', val ? '#ef4444' : '#d1d5db');
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — data-rq-class-* toggle',
+				html: '<style>\n.card { padding:1rem; border:2px solid #e2e8f0; border-radius:8px; }\n.card.highlighted { border-color:#6366f1; background:#eef2ff; }\n</style>\n<div id="app">\n  <div class="card" data-rq-class-highlighted="on">This card can be highlighted.</div>\n  <br>\n  <button id="toggle">Toggle highlight</button>\n</div>',
+				js: '$(\'#app\').rqState({ on: false });\n\n$(\'#toggle\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'on\', function (val) { return !val; });\n});'
+			},
+			2: {
+				title: 'reQuery — data-rq-class-* validation',
+				html: '<style>\n.input-error { border-color: #ef4444 !important; }\n.error-msg { color:#ef4444; font-size:0.8rem; margin-top:0.25rem; }\n</style>\n<div id="app">\n  <input id="email" type="email" placeholder="Enter email" data-rq-class-input-error="hasError" style="border:1px solid #d1d5db;padding:0.4rem;border-radius:5px" />\n  <p data-rq-show="hasError" class="error-msg">Please enter a valid email.</p>\n</div>',
+				js: '$(\'#app\').rqState({ hasError: false });\n\n$(\'#email\').on(\'blur\', function () {\n  var ok = this.value.includes(\'@\');\n  $(\'#app\').rqSet(\'hasError\', !ok && this.value.length > 0);\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example', html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

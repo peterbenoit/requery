@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>.rqState() — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html" class="active">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1>.rqState()</h1>
+			<p class="lead">
+				Attach data to an element and make that element reactive. Call this once on your
+				container element to get started — everything else flows from here.
+			</p>
+		</div>
+
+		<div class="method-sig">
+			<div>$(selector)<strong>.rqState</strong>( initialData )</div>
+			<div>$(selector)<strong>.rqState</strong>( initialData, options )</div>
+		</div>
+
+		<h2>Parameters</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Type</th>
+					<th>Required</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>initialData</td>
+					<td>object</td>
+					<td>yes</td>
+					<td>Your starting values. Any key you want to use must appear here.</td>
+				</tr>
+				<tr>
+					<td>options.persist</td>
+					<td>string</td>
+					<td class="optional">optional</td>
+					<td>A unique name. When set, state is saved to <code>localStorage</code> and restored on the next
+						page load. See <a href="persist.html">Saving Data</a>.</td>
+				</tr>
+				<tr>
+					<td>options.onChange</td>
+					<td>function</td>
+					<td class="optional">optional</td>
+					<td>Called as <code>onChange(key, newValue, oldValue)</code> whenever any state key changes.</td>
+				</tr>
+				<tr>
+					<td>options.onInit</td>
+					<td>function</td>
+					<td class="optional">optional</td>
+					<td>Called once after the initial render, with a snapshot of the full state as the argument.</td>
+				</tr>
+				<tr>
+					<td>options.debug</td>
+					<td>boolean</td>
+					<td class="optional">optional</td>
+					<td>When <code>true</code>, logs every state change to the browser console.</td>
+				</tr>
+				<tr>
+					<td>options.actions</td>
+					<td>object</td>
+					<td class="optional">optional</td>
+					<td>Named event handlers for <code>data-rq-on-*</code> attributes. See <a
+							href="data-rq-on.html">data-rq-on-*</a>.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="returns">
+			<strong>Returns:</strong> the jQuery object (chainable)
+		</div>
+
+		<!-- Example 1 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>Basic counter</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">html</span>
+				<pre><code class="language-html">&lt;div id="app"&gt;
+  &lt;p&gt;Count: &lt;span data-rq-text="count"&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;button id="inc"&gt;+1&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+			</div>
+			<div class="code-block" style="border-top:1px solid #2d2f55;border-radius:0;margin-top:-1px">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ count: 0 });
+
+$('#inc').on('click', function () {
+  $('#app').rqMutate('count', function (n) { return n + 1; });
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo</div>
+				<div id="ex1">
+					<div class="demo-row">
+						<span>Count: <span class="val-display" data-rq-text="count"></span></span>
+						<button class="ex1-inc">+1</button>
+					</div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Using onChange to react to any change</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ name: 'world' }, {
+  onChange: function (key, newVal, oldVal) {
+    console.log(key + ' changed from ' + oldVal + ' to ' + newVal);
+  }
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — type a name and watch the log</div>
+				<div id="ex2">
+					<div class="demo-row">
+						<input type="text" data-rq-val="name" placeholder="Type a name…" />
+						<span>Hello, <strong data-rq-text="name"></strong>!</span>
+					</div>
+					<div class="log-output" id="ex2-log">
+						<p style="color:#9ca3af">Changes will appear here…</p>
+					</div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 3 -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">3</span>
+				<h3>Using onInit to run code after the first render</h3>
+			</div>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$('#app').rqState({ score: 42 }, {
+  onInit: function (state) {
+    console.log('Ready! Starting score:', state.score);
+  }
+});</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — score loaded from state on init</div>
+				<div id="ex3">
+					<div class="demo-row">
+						<span>Score: <span class="val-display" data-rq-text="score"></span></span>
+						<button class="ex3-add">+10</button>
+					</div>
+					<div class="log-output" id="ex3-log"></div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[3].html, ex[3].js, ex[3].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqset.html">.rqSet()</a>
+				<a href="rqget.html">.rqGet()</a>
+				<a href="rqreset.html">.rqReset()</a>
+				<a href="persist.html">Saving Data (persist)</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Demo 1
+		$('#ex1').rqState({ count: 0 });
+		$('#ex1').on('click', '.ex1-inc', function () {
+			$('#ex1').rqMutate('count', function (n) { return n + 1; });
+		});
+
+		// ── Demo 2
+		$('#ex2').rqState({ name: 'world' }, {
+			onChange: function (key, newVal, oldVal) {
+				var msg = '<p><strong>' + key + '</strong>: "' + oldVal + '" → "' + newVal + '"</p>';
+				$('#ex2-log').prepend(msg);
+			}
+		});
+
+		// ── Demo 3
+		$('#ex3').rqState({ score: 42 }, {
+			onInit: function (state) {
+				$('#ex3-log').html('<p>onInit fired — starting score: <strong>' + state.score + '</strong></p>');
+			}
+		});
+		$('#ex3').on('click', '.ex3-add', function () {
+			$('#ex3').rqMutate('score', function (n) { return n + 10; });
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — rqState basic counter',
+				html: '<div id="app">\n  <p>Count: <span data-rq-text="count"></span></p>\n  <button id="inc">+1</button>\n</div>',
+				js: '$(\'#app\').rqState({ count: 0 });\n\n$(\'#inc\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'count\', function (n) { return n + 1; });\n});'
+			},
+			2: {
+				title: 'reQuery — rqState onChange',
+				html: '<div id="app">\n  <input type="text" data-rq-val="name" placeholder="Type a name…" />\n  <p>Hello, <strong data-rq-text="name"></strong>!</p>\n  <div id="log"></div>\n</div>',
+				js: '$(\'#app\').rqState({ name: \'world\' }, {\n  onChange: function (key, newVal, oldVal) {\n    $(\'#log\').prepend(\'<p>\' + key + \': "\' + oldVal + \'" → "\' + newVal + \'"</p>\');\n  }\n});'
+			},
+			3: {
+				title: 'reQuery — rqState onInit',
+				html: '<div id="app">\n  <p>Score: <span data-rq-text="score"></span></p>\n  <button id="add">+10</button>\n  <div id="log"></div>\n</div>',
+				js: '$(\'#app\').rqState({ score: 42 }, {\n  onInit: function (state) {\n    $(\'#log\').html(\'<p>Ready! Starting score: \' + state.score + \'</p>\');\n  }\n});\n\n$(\'#add\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'score\', function (n) { return n + 10; });\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Example',
+				html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

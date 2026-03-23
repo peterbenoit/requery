@@ -8,7 +8,12 @@ import { Aside } from '@astrojs/starlight/components';
 ## Signature
 
 ```ts
-$.fn.rqState(initialData: object, opts?: { actions?: object }): this
+$.fn.rqState(initialData: object, opts?: {
+  actions?:  object;
+  onChange?: (key: string, newValue: any, oldValue: any) => void;
+  onInit?:   (stateSnapshot: object) => void;
+  debug?:    boolean;
+}): this
 ```
 
 **Chainable** — returns `this` for jQuery chaining.
@@ -20,6 +25,9 @@ $.fn.rqState(initialData: object, opts?: { actions?: object }): this
 | `initialData` | `object` | Yes | Key/value pairs to initialize as reactive state |
 | `opts` | `object` | No | Options object |
 | `opts.actions` | `object` | No | Named action handlers for `data-rq-on-*` declarative events |
+| `opts.onChange` | `function` | No | Called as `(key, newValue, oldValue)` whenever any key changes |
+| `opts.onInit` | `function` | No | Called once after the initial render pass, receives a shallow state snapshot |
+| `opts.debug` | `boolean` | No | Logs every state change to the console as `[reQuery] "key": old → new` |
 
 ## Description
 
@@ -72,6 +80,44 @@ $('#app').rqState({ count: 0 }, {
 
 The action's return value is a **partial state update** — only the returned keys are updated via `rqSet`. Return `undefined` or `void` to make no change.
 
+### With onChange hook
+
+`onChange` fires for every key change — useful for persistence, analytics, or cross-cutting side effects.
+
+```js
+$('#app').rqState({ count: 0 }, {
+  onChange(key, newVal, oldVal) {
+    console.log(`[changed] ${key}: ${oldVal} → ${newVal}`);
+    localStorage.setItem('app-' + key, JSON.stringify(newVal));
+  },
+});
+```
+
+### With onInit callback
+
+`onInit` fires once after the initial render so you can inspect the DOM-ready state without setting up a watcher.
+
+```js
+$('#app').rqState({ user: null, loaded: false }, {
+  onInit(state) {
+    console.log('reQuery ready:', state);
+  },
+});
+```
+
+### With debug mode
+
+Set `debug: true` during development to trace every state change in the browser console.
+
+```js
+$('#app').rqState({ count: 0, label: 'hello' }, { debug: true });
+
+$('#app').rqSet('count', 1);
+// [reQuery] "count": 0 → 1
+```
+
+Remove or set `debug: false` before shipping to production.
+
 ### Chaining
 
 ```js
@@ -84,4 +130,6 @@ $('#app')
 ## Notes
 
 - The `opts.actions` object is a convenience for wiring `data-rq-on-*` handlers without writing manual event listeners. See [DOM Bindings — data-rq-on-*](/api/dom-bindings/#data-rq-on-event) for details.
+- `opts.onChange` is a global hook — it fires for every key. Use `rqWatch` when you only care about a specific key.
+- `opts.debug` uses `console.log`. It has no effect after `rqDestroy()` is called.
 - `rqState()` applies to **each element** in the jQuery set. If the selector matched multiple elements, each gets its own independent state record.

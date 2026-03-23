@@ -18,7 +18,7 @@ const store = new WeakMap();
 /**
  * Returns the internal state record for an element, or null if none.
  * @param {Element} el
- * @returns {{ data: object, watchers: object, computed: object } | null}
+ * @returns {{ data: object, initial: object, watchers: object, computed: object, onChange: Function|null, debug: boolean } | null}
  */
 export function getRecord(el) {
 	return store.get(el) ?? null;
@@ -30,18 +30,24 @@ export function getRecord(el) {
  *
  * @param {Element} el - The root DOM element
  * @param {object} initialData - Initial state key/value pairs
- * @param {object} [opts={}] - Options (reserved for future use)
+ * @param {object} [opts={}] - Options
+ * @param {Function} [opts.onChange] - Called as onChange(key, newValue, oldValue) on any state change
+ * @param {boolean} [opts.debug] - Log state changes to the console
  */
 export function initState(el, initialData, opts = {}) {
 	if (store.has(el)) {
-		// Merge additional keys into existing state
+		// Merge additional keys into existing state (and record initial values for new keys)
 		const record = store.get(el);
 		Object.assign(record.data, initialData);
+		Object.assign(record.initial, initialData);
 	} else {
 		store.set(el, {
 			data: { ...initialData },
-			watchers: {},   // { [key]: Function[] }
-			computed: {},   // { [key]: Function }
+			initial: { ...initialData },  // snapshot for rqReset
+			watchers: {},                 // { [key]: Function[] }
+			computed: {},                 // { [key]: Function }
+			onChange: typeof opts.onChange === 'function' ? opts.onChange : null,
+			debug: opts.debug === true,
 		});
 	}
 }
@@ -82,6 +88,16 @@ export function setState(el, key, value, onUpdate) {
 	if (Object.is(oldValue, value)) return; // No change, bail early
 
 	record.data[key] = value;
+
+	// Debug logging
+	if (record.debug) {
+		console.log(`[reQuery] "${key}":`, oldValue, '→', value);
+	}
+
+	// Global onChange hook
+	if (record.onChange) {
+		record.onChange(key, value, oldValue);
+	}
 
 	// Notify watchers
 	const watchers = record.watchers[key];
@@ -147,4 +163,14 @@ export function addComputed(el, key, fn) {
 		return;
 	}
 	record.computed[key] = fn;
+}
+
+/**
+ * Remove all state associated with a DOM element.
+ * Called by rqDestroy to clean up the WeakMap entry.
+ *
+ * @param {Element} el
+ */
+export function destroyState(el) {
+	store.delete(el);
 }

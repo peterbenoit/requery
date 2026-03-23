@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 ```ts
 $.fn.rqGet(key: string): any
+$.fn.rqGet(): object
 ```
 
 <Aside type="caution" title="Not chainable">
@@ -19,13 +20,15 @@ $.fn.rqGet(key: string): any
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `key` | `string` | Yes | The state key to read |
+| `key` | `string` | No | The state key to read. Omit to receive a full state snapshot. |
 
 ## Description
 
 Reads a state value from the **first matched element** in the jQuery set. If the element has no state record, returns `undefined`.
 
 If `key` is a computed key (registered via `rqComputed`), the compute function is called and its return value is returned. The result is **not cached** — the function runs on every `rqGet` call.
+
+Called **with no argument**, `rqGet()` returns a **shallow snapshot** of the full state object — a plain copy so mutations to the returned object do not affect the live state.
 
 ## Examples
 
@@ -58,14 +61,30 @@ if (count > 10) {
 }
 ```
 
+### Read the full state snapshot
+
+Useful for serializing, logging, or passing state to external code:
+
+```js
+$('#app').rqState({ name: 'Alice', score: 42 });
+
+const snap = $('#app').rqGet();
+// { name: 'Alice', score: 42 }
+
+// The snapshot is a shallow copy — safe to inspect, not to mutate
+console.log(JSON.stringify(snap));
+```
+
 ### Does not work on empty sets
 
 ```js
 $('#nonexistent').rqGet('count'); // undefined
+$('#nonexistent').rqGet();        // undefined
 ```
 
 ## Notes
 
 - Only operates on the **first element** in the matched set (same as `$.fn.val()`, `$.fn.text()`, etc.).
 - Returns `undefined` if the element has no state, not an error.
+- The snapshot returned by the no-arg form does **not** include computed keys — those are derived on demand via `rqGet(key)`.
 - Computed values are lazily evaluated — see [Reactivity Model](/concepts/reactivity-model/) for the implications.

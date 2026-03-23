@@ -9,6 +9,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 ```ts
 $.fn.rqSet(key: string, value: any): this
+$.fn.rqSet(updates: object): this
 ```
 
 **Chainable** — returns `this` for jQuery chaining.
@@ -17,8 +18,9 @@ $.fn.rqSet(key: string, value: any): this
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `key` | `string` | Yes | The state key to update |
-| `value` | `any` | Yes | The new value |
+| `key` | `string` | Yes (single form) | The state key to update |
+| `value` | `any` | Yes (single form) | The new value |
+| `updates` | `object` | Yes (batch form) | Plain object of `{ key: value }` pairs to set in one call |
 
 ## Description
 
@@ -42,9 +44,22 @@ $('#app')
   .rqSet('message', 'World');
 ```
 
-### Chaining multiple sets
+### Batch set multiple keys
+
+Pass a plain object to update several keys in one call. Each key goes through the full update pipeline — watchers fire and DOM bindings update for each changed key.
 
 ```js
+$('#app').rqSet({
+  title: 'My App',
+  loading: false,
+  count: 0,
+});
+```
+
+This is equivalent to chaining individual `rqSet` calls but more concise:
+
+```js
+// equivalent
 $('#app')
   .rqSet('title', 'My App')
   .rqSet('loading', false)

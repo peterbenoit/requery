@@ -62,6 +62,7 @@
 
 	<h1>reQuery Examples</h1>
 	<p>Phases 1 &amp; 2: State Core + DOM Binding. No build step.</p>
+	<p><small>Open the browser console to see debug/onChange output from the demos below.</small></p>
 
 	<!-- =====================================================================
        Example 1: Counter
@@ -131,6 +132,65 @@
 		<p id="watch-log" style="color:#666; font-size:0.85rem;"></p>
 	</div>
 
+	<!-- =====================================================================
+       Example 6: rqReset
+       Demonstrates rqReset(key?) to restore initial values
+  ===================================================================== -->
+	<div class="card" id="reset-demo">
+		<h2>rqReset</h2>
+		<label>
+			Name: <input type="text" data-rq-val="name" />
+		</label>
+		<label>
+			Score: <input type="number" data-rq-val="score" />
+		</label>
+		<p>Name: <strong data-rq-text="name"></strong> &nbsp;|&nbsp; Score: <strong data-rq-text="score"></strong></p>
+		<button id="reset-name">Reset name only</button>
+		<button id="reset-all">Reset all</button>
+	</div>
+
+	<!-- =====================================================================
+       Example 7: rqSet({}) batch form + rqGet() snapshot
+       Demonstrates passing an object to rqSet, and no-arg rqGet
+  ===================================================================== -->
+	<div class="card" id="batch-demo">
+		<h2>Batch rqSet &amp; rqGet snapshot</h2>
+		<p>Status: <strong data-rq-text="status"></strong></p>
+		<p>User: <strong data-rq-text="user"></strong></p>
+		<p>Count: <strong data-rq-text="count"></strong></p>
+		<button id="batch-set">Batch-set all keys</button>
+		<button id="log-snapshot">Log state snapshot</button>
+		<pre id="snapshot-out"
+			style="background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.8rem;min-height:2rem;"></pre>
+	</div>
+
+	<!-- =====================================================================
+       Example 8: opts.onChange + opts.debug
+       Demonstrates the global change hook and debug console logging
+  ===================================================================== -->
+	<div class="card" id="hooks-demo">
+		<h2>onChange &amp; debug options</h2>
+		<p><em>Open the browser console to see output.</em></p>
+		<label>
+			Value: <input type="text" data-rq-val="value" placeholder="type something…" />
+		</label>
+		<p>Current: <strong data-rq-text="value"></strong></p>
+		<p id="change-log" style="color:#666; font-size:0.85rem; white-space:pre-wrap;"></p>
+	</div>
+
+	<!-- =====================================================================
+       Example 9: rqDestroy
+       Demonstrates tearing down state and re-initializing
+  ===================================================================== -->
+	<div class="card" id="destroy-demo">
+		<h2>rqDestroy &amp; re-init</h2>
+		<p>Counter: <strong data-rq-text="n">—</strong></p>
+		<button id="destroy-inc">+</button>
+		<button id="do-destroy">Destroy</button>
+		<button id="do-reinit">Re-init (reset to 0)</button>
+		<p id="destroy-status" style="color:#666; font-size:0.85rem;"></p>
+	</div>
+
 
 	<!-- jQuery 4 from CDN -->
 	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
@@ -198,6 +258,68 @@
 
 		// Fire once on load to populate total
 		recalcTotal();
+
+		// -------------------------------------------------------------------
+		// Example 6: rqReset
+		// -------------------------------------------------------------------
+		$('#reset-demo').rqState({ name: 'Alice', score: 100 });
+
+		$('#reset-name').on('click', () => {
+			$('#reset-demo').rqReset('name');
+		});
+		$('#reset-all').on('click', () => {
+			$('#reset-demo').rqReset();
+		});
+
+		// -------------------------------------------------------------------
+		// Example 7: Batch rqSet + rqGet snapshot
+		// -------------------------------------------------------------------
+		$('#batch-demo').rqState({ status: 'idle', user: 'guest', count: 0 });
+
+		$('#batch-set').on('click', () => {
+			$('#batch-demo').rqSet({
+				status: 'active',
+				user: 'alice',
+				count: 42,
+			});
+		});
+		$('#log-snapshot').on('click', () => {
+			const snap = $('#batch-demo').rqGet();
+			$('#snapshot-out').text(JSON.stringify(snap, null, 2));
+		});
+
+		// -------------------------------------------------------------------
+		// Example 8: opts.onChange + opts.debug
+		// -------------------------------------------------------------------
+		let changeLines = [];
+		$('#hooks-demo').rqState({ value: '' }, {
+			debug: true,  // logs [reQuery] to the browser console
+			onChange(key, newVal, oldVal) {
+				changeLines.unshift(`"${key}": "${oldVal}" → "${newVal}"`);
+				if (changeLines.length > 5) changeLines.pop();
+				$('#change-log').text(changeLines.join('\n'));
+			},
+		});
+
+		// -------------------------------------------------------------------
+		// Example 9: rqDestroy + re-init
+		// -------------------------------------------------------------------
+		function initDestroyDemo() {
+			$('#destroy-demo').rqState({ n: 0 });
+			$('#destroy-status').text('State is active.');
+		}
+		initDestroyDemo();
+
+		$('#destroy-inc').on('click', () => {
+			$('#destroy-demo').rqMutate('n', v => v + 1);
+		});
+		$('#do-destroy').on('click', () => {
+			$('#destroy-demo').rqDestroy();
+			$('#destroy-status').text('State destroyed. Increment button is now a no-op.');
+		});
+		$('#do-reinit').on('click', () => {
+			initDestroyDemo();
+		});
 
 		// Watch log
 		$('#computed-demo').rqWatch('total', (newVal) => {

@@ -13,7 +13,7 @@
  */
 
 import $ from 'jquery';
-import { initState, getState, setState, mutateState, addWatcher, addComputed, getRecord } from './core/state.js';
+import { initState, getState, setState, mutateState, addWatcher, addComputed, getRecord, destroyState } from './core/state.js';
 import { applyBindings, renderAll, bindInputs } from './core/binding.js';
 import { renderList } from './core/lists.js';
 import { bindActions } from './core/events.js';
@@ -65,25 +65,43 @@ $.fn.rqState = function (initialData = {}, opts = {}) {
 			Object.entries(record.data).forEach(([key, value]) => {
 				if (Array.isArray(value)) renderList(el, key, value);
 			});
+			// onInit callback
+			if (typeof opts.onInit === 'function') {
+				opts.onInit({ ...record.data });
+			}
 		}
 	});
 };
 
 // ---------------------------------------------------------------------------
-// $.fn.rqGet(key)
+// $.fn.rqGet(key?)
 // Read a state value from the first matched element.
+// If called with no key, returns a shallow snapshot of the full state.
 // ---------------------------------------------------------------------------
 $.fn.rqGet = function (key) {
 	const el = this[0];
 	if (!el) return undefined;
+	if (key === undefined) {
+		const record = getRecord(el);
+		return record ? { ...record.data } : undefined;
+	}
 	return getState(el, key);
 };
 
 // ---------------------------------------------------------------------------
-// $.fn.rqSet(key, value)
-// Write a state value and trigger DOM updates. Chainable.
+// $.fn.rqSet(key, value) | $.fn.rqSet(obj)
+// Write one or more state values and trigger DOM updates. Chainable.
 // ---------------------------------------------------------------------------
 $.fn.rqSet = function (key, value) {
+	if (key !== null && typeof key === 'object') {
+		// Batch form: rqSet({ key1: val1, key2: val2 })
+		const updates = key;
+		return this.each(function () {
+			Object.entries(updates).forEach(([k, v]) => {
+				setState(this, k, v, onUpdate);
+			});
+		});
+	}
 	return this.each(function () {
 		setState(this, key, value, onUpdate);
 	});
@@ -116,6 +134,40 @@ $.fn.rqWatch = function (key, fn) {
 $.fn.rqComputed = function (key, fn) {
 	return this.each(function () {
 		addComputed(this, key, fn);
+	});
+};
+
+// ---------------------------------------------------------------------------
+// $.fn.rqReset(key?)
+// Reset state to its initial values. Pass a key to reset a single value,
+// or call with no argument to reset all keys. Chainable.
+// ---------------------------------------------------------------------------
+$.fn.rqReset = function (key) {
+	return this.each(function () {
+		const record = getRecord(this);
+		if (!record) return;
+		const el = this;
+		if (key !== undefined) {
+			if (Object.prototype.hasOwnProperty.call(record.initial, key)) {
+				setState(el, key, record.initial[key], onUpdate);
+			}
+		} else {
+			Object.keys(record.initial).forEach(k => {
+				setState(el, k, record.initial[k], onUpdate);
+			});
+		}
+	});
+};
+
+// ---------------------------------------------------------------------------
+// $.fn.rqDestroy()
+// Remove all state and unbind reQuery event handlers from the element.
+// After this, the element is as if rqState was never called. Chainable.
+// ---------------------------------------------------------------------------
+$.fn.rqDestroy = function () {
+	return this.each(function () {
+		destroyState(this);
+		$(this).off('.rq');
 	});
 };
 

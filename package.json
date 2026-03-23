@@ -1,6 +1,6 @@
 {
 	"name": "requery",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "A jQuery 4 plugin for reactive state and declarative DOM binding inspired by React and Vue.",
 	"main": "dist/requery.umd.js",
 	"module": "dist/requery.esm.js",

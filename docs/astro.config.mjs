@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://requery.dev',
+	site: 'https://requery.vercel.app/',
 	integrations: [
 		starlight({
 			title: 'reQuery',
@@ -35,7 +35,7 @@ export default defineConfig({
 				// Referrer and security hygiene
 				{ tag: 'meta', attrs: { name: 'referrer', content: 'strict-origin-when-cross-origin' } },
 
-				// Peter's scripts
+				// My scripts
 				{
 					tag: 'script',
 					attrs: {
@@ -43,11 +43,7 @@ export default defineConfig({
 						'data-mode': 'tracker',
 						defer: true,
 					},
-				},
-				{
-					tag: 'script',
-					attrs: { src: 'https://uiguy.dev/libs/console.js' },
-				},
+				}
 			],
 			editLink: {
 				baseUrl: 'https://github.com/peterbenoit/requery/edit/main/docs/',

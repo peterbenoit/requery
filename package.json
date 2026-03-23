@@ -1,6 +1,6 @@
 {
 	"name": "requery",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "A jQuery 4 plugin for reactive state and declarative DOM binding inspired by React and Vue.",
 	"main": "dist/requery.umd.js",
 	"module": "dist/requery.esm.js",
@@ -24,7 +24,7 @@
 		"type": "git",
 		"url": "https://github.com/peterbenoit/requery.git"
 	},
-	"homepage": "https://github.com/peterbenoit/requery#readme",
+	"homepage": "https://requeryjs.com/",
 	"bugs": {
 		"url": "https://github.com/peterbenoit/requery/issues"
 	},

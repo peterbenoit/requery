@@ -191,6 +191,24 @@
 		<p id="destroy-status" style="color:#666; font-size:0.85rem;"></p>
 	</div>
 
+	<!-- =====================================================================
+       Example 10: opts.persist
+       One option — that's all it takes to survive a page reload.
+  ===================================================================== -->
+	<div class="card" id="persist-demo">
+		<h2>Persist across page reloads</h2>
+		<p><em>Change the values below, then reload the page. They'll still be here.</em></p>
+		<label>
+			Your name: <input type="text" data-rq-val="username" placeholder="type your name…" />
+		</label>
+		<label>
+			Favorite number: <input type="number" data-rq-val="favNumber" />
+		</label>
+		<p>Hello, <strong data-rq-text="username">stranger</strong>! Your number is <strong
+				data-rq-text="favNumber"></strong>.</p>
+		<button id="persist-clear">Clear saved data</button>
+	</div>
+
 
 	<!-- jQuery 4 from CDN -->
 	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
@@ -319,6 +337,20 @@
 		});
 		$('#do-reinit').on('click', () => {
 			initDestroyDemo();
+		});
+
+		// -------------------------------------------------------------------
+		// Example 10: opts.persist
+		// One option — that's all it takes to survive a page reload.
+		// -------------------------------------------------------------------
+		$('#persist-demo').rqState(
+			{ username: '', favNumber: 7 },
+			{ persist: 'rq-persist-demo' }
+		);
+
+		$('#persist-clear').on('click', () => {
+			localStorage.removeItem('rq-persist-demo');
+			$('#persist-demo').rqReset();
 		});
 
 		// Watch log

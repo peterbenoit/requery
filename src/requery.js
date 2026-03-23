@@ -38,9 +38,43 @@ function onUpdate(el, key, value, allData) {
 // ---------------------------------------------------------------------------
 $.fn.rqState = function (initialData = {}, opts = {}) {
 	return this.each(function () {
-		initState(this, initialData, opts);
-
 		const el = this;
+		let data = { ...initialData };
+
+		// Persistence: load saved state from localStorage on init.
+		// Only keys that exist in initialData are restored — no unknown keys
+		// are ever injected from storage.
+		if (opts.persist) {
+			try {
+				const saved = JSON.parse(localStorage.getItem(opts.persist) || 'null');
+				if (saved && typeof saved === 'object') {
+					Object.keys(data).forEach(k => {
+						if (Object.prototype.hasOwnProperty.call(saved, k)) {
+							data[k] = saved[k];
+						}
+					});
+				}
+			} catch (_) { /* corrupt or unavailable storage — fall back to defaults */ }
+		}
+
+		// Compose onChange: persistence + optional user callback run together.
+		let resolvedOpts = opts;
+		if (opts.persist) {
+			const persistKey = opts.persist;
+			const userOnChange = typeof opts.onChange === 'function' ? opts.onChange : null;
+			resolvedOpts = {
+				...opts,
+				onChange(key, newVal, oldVal) {
+					try {
+						const record = getRecord(el);
+						if (record) localStorage.setItem(persistKey, JSON.stringify(record.data));
+					} catch (_) { /* storage unavailable */ }
+					if (userOnChange) userOnChange(key, newVal, oldVal);
+				},
+			};
+		}
+
+		initState(el, data, resolvedOpts);
 
 		// Wire two-way input binding
 		bindInputs(el, (key, value) => {

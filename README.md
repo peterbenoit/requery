@@ -1,29 +1,41 @@
 # reQuery
 
-A **jQuery 4 plugin** that brings reactive state and declarative DOM binding to your jQuery projects — without introducing a component framework, a virtual DOM, or a build step.
+A jQuery plugin that makes your page update itself when your data changes.
 
-> jQuery-first. Selector-centric. Chainable. No magic.
+No React. No Vue. No build step. Just jQuery, the way you already know it.
 
 ---
 
-## Why reQuery?
+## Who is this for?
 
-If you work on projects that use jQuery — legacy codebases, WordPress themes, simple web pages — you've probably wanted reactive data binding without pulling in an entire framework. reQuery adds that capability in a way that feels like native jQuery: you start with a selector, you chain methods, and the DOM updates itself.
+You know jQuery. You've been writing things like:
 
-No virtual DOM. No component tree. No build step required.
+```js
+$('#count').text(count);
+$('#message').show();
+$('input').val(username);
+```
+
+And every time something changes, you have to remember to find every element that
+displays that piece of data and update it by hand. It works — but it gets old fast.
+
+reQuery lets you say *"when this value changes, update the page automatically"* —
+without switching to React, without learning JSX, and without touching a bundler.
+
+It's still jQuery. It still uses selectors. It just also keeps your DOM in sync.
 
 ---
 
 ## Quick Start
 
-### Script tag (no build step)
+### Drop it in a page (no build step needed)
 
 ```html
 <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@latest/dist/requery.umd.js"></script>
 ```
 
-### ESM / npm
+### npm
 
 ```bash
 npm install jquery
@@ -32,12 +44,12 @@ npm install jquery
 
 ```js
 import $ from 'jquery';
-import 'requery'; // registers $.fn.rq* methods
+import 'requery';
 ```
 
 ---
 
-## Basic Example
+## Your first example
 
 ```html
 <div id="counter">
@@ -54,17 +66,31 @@ import 'requery'; // registers $.fn.rq* methods
 </script>
 ```
 
-That's it. No components, no templates, no compilation.
+That `data-rq-text="count"` attribute is the only new thing you need to learn.
+It means: *"keep this element's text equal to the `count` value."*
+When `count` changes, the text updates. You don’t touch the DOM yourself.
+
+---
+
+## Saving state between page reloads
+
+Add `persist: 'any-name-you-want'` and reQuery handles localStorage for you:
+
+```js
+$('#counter').rqState({ count: 0 }, { persist: 'my-counter' });
+```
+
+That’s it. The count survives a page refresh. No extra code needed.
 
 ---
 
 ## API Reference
 
-All methods are registered on `$.fn` and use the `rq` prefix.
+All methods start with `rq` so they don't clash with your existing jQuery code.
 
 ### `$.fn.rqState(initialData, opts?)`
 
-Initialize reactive state on the matched element. State is scoped to that element — it doesn't leak globally.
+This is how you start. Give it your data, and reQuery will keep the DOM in sync.
 
 ```js
 $('#app').rqState({ count: 0, name: 'world' });
@@ -72,58 +98,65 @@ $('#app').rqState({ count: 0, name: 'world' });
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `actions` | `object` | Named event handlers for `data-rq-on-*` bindings (Phase 5) |
+| `persist` | `string` | Save state to `localStorage` under this key. Restored on next load. |
+| `actions` | `object` | Named event handlers for `data-rq-on-*` buttons |
+| `onChange` | `function` | Runs as `(key, newValue, oldValue)` every time any value changes |
+| `onInit` | `function` | Runs once after the page is first populated |
+| `debug` | `boolean` | Log every state change to the browser console |
 
 ---
 
-### `$.fn.rqGet(key)`
+### `$.fn.rqGet(key?)`
 
-Read a state value. Returns the value (not chainable).
+Read a value. Pass a key to get one value; pass nothing to get all values as a plain object.
 
 ```js
-const count = $('#app').rqGet('count'); // → 0
+const count = $('#app').rqGet('count');   // → 0
+const all   = $('#app').rqGet();          // → { count: 0, name: 'world' }
 ```
 
 ---
 
-### `$.fn.rqSet(key, value)`
+### `$.fn.rqSet(key, value)` or `$.fn.rqSet({ key: value, ... })`
 
-Write a state value. Triggers all DOM bindings and watchers for that key. Chainable.
+Change a value. The DOM updates immediately. Chainable.
 
 ```js
-$('#app').rqSet('count', 5).rqSet('name', 'reQuery');
+$('#app').rqSet('count', 5);
+
+// Set multiple at once:
+$('#app').rqSet({ count: 0, name: 'reset' });
 ```
 
 ---
 
 ### `$.fn.rqMutate(key, fn)`
 
-Update state via a callback — safe for arrays and objects. Chainable.
+Update a value based on what it currently is. The right tool for counters, toggles, and arrays.
 
 ```js
-$('#app').rqMutate('count', n => n + 1);
-$('#app').rqMutate('items', arr => [...arr, 'new item']);
+$('#app').rqMutate('count', n => n + 1);          // increment
+$('#app').rqMutate('open', v => !v);               // toggle
+$('#app').rqMutate('items', arr => [...arr, 'new']); // append
 ```
 
 ---
 
 ### `$.fn.rqWatch(key, fn)`
 
-Register a watcher that fires when a key changes. Chainable.
+Run something whenever a specific value changes.
 
 ```js
-$('#app')
-  .rqState({ count: 0 })
-  .rqWatch('count', (newVal, oldVal) => {
-    console.log(`count changed: ${oldVal} → ${newVal}`);
-  });
+$('#app').rqWatch('count', (newVal, oldVal) => {
+  console.log(`count changed: ${oldVal} → ${newVal}`);
+});
 ```
 
 ---
 
 ### `$.fn.rqComputed(key, fn)`
 
-Register a derived value computed from state. Chainable.
+Derive a value from other values. Updates automatically when dependencies change.
 
 ```js
 $('#app')
@@ -131,6 +164,27 @@ $('#app')
   .rqComputed('total', data => data.price * data.qty);
 
 $('#app').rqGet('total'); // → 30
+```
+
+---
+
+### `$.fn.rqReset(key?)`
+
+Restore original values. Pass a key to reset just one thing, or nothing to reset everything.
+
+```js
+$('#app').rqReset('count');  // just count
+$('#app').rqReset();         // everything
+```
+
+---
+
+### `$.fn.rqDestroy()`
+
+Clean up completely. Removes state and unbinds all reQuery event listeners.
+
+```js
+$('#app').rqDestroy();
 ```
 
 ---
@@ -298,12 +352,11 @@ npm test
 
 ## Design Principles
 
-- **jQuery-first** — start with a selector, not with data
-- **No virtual DOM** — direct DOM manipulation, always
-- **No component tree** — scope is the element, not a hierarchy
-- **Chainable** — `$.fn.rq*` methods return `this`
-- **No build step for consumers** — drop in a `<script>` tag and go
-- **State is private** — stored in a WeakMap, not on the DOM or `$.data()`
+- **Start with a selector**, not with data — because that's jQuery
+- **No virtual DOM** — reQuery writes directly to the DOM, the same way you always have
+- **No component tree** — your elements are just elements, not components
+- **No build step for users** — drop in a `<script>` tag and go
+- **State is private** — it doesn't sit on the DOM or in a global variable; it's invisible until you read it
 
 ---
 

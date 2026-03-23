@@ -13,6 +13,32 @@ component framework.
 
 ---
 
+## Target Audience — READ THIS BEFORE WRITING ANY CODE OR DOCS
+
+reQuery is built for **jQuery developers who don't know React or Vue** and don't want to
+learn them. These are people who:
+
+- Know enough jQuery to wire up a click handler and update some text
+- Have been writing `$(el).css()`, `$(el).text()`, `$(el).show()` for years
+- Would love their page to update automatically when data changes, without having to
+  manually hunt down every DOM element and repaint it
+- Would be overwhelmed by React's JSX, components, hooks, bundlers, and mental model
+- Are building WordPress sites, small CMSes, landing pages with interactivity, or
+  maintaining legacy codebases that already use jQuery
+
+**This means:**
+- Every feature must have a one-line or two-line "just works" usage path
+- Docs and examples must assume the reader knows jQuery, not computer science
+- Avoid jargon like "WeakMap", "reactive pipeline", "declarative binding" in user-facing
+  writing. Say what the thing *does*, not how it works internally.
+- Simple is always better than complete. An 80% solution that a beginner can understand
+  beats a 100% solution they'll never use.
+- **Do not gate-keep features because they don't fit a purist philosophy.** If a beginner
+  will obviously want it (e.g. "save my data when I reload the page"), build it and make
+  it simple.
+
+---
+
 ## Core Philosophy — READ THIS FIRST
 
 These rules are non-negotiable. Every suggestion, refactor, and implementation must
@@ -119,7 +145,11 @@ Do not suggest or implement the following unless the user explicitly requests th
 - Virtual DOM or DOM diffing
 - JSX or any custom template language
 - Any React/Vue/Svelte-style lifecycle hooks
-- A global state store (like Pinia/Redux/Vuex)
+
+**Persistence is IN scope.** `opts.persist` saves state to `localStorage` automatically.
+This is a core user need — beginners absolutely expect data to survive a page reload.
+Do not suggest they "just use onChange and write their own persistence layer" — that
+defeats the purpose. The option exists; use it.
 
 ---
 

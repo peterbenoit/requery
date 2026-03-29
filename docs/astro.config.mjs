@@ -43,7 +43,10 @@ export default defineConfig({
 						'data-mode': 'tracker',
 						defer: true,
 					},
-				}
+				},
+				// Google Analytics
+				{ tag: 'script', attrs: { src: 'https://www.googletagmanager.com/gtag/js?id=G-GQEC09BG5Z', async: true } },
+				{ tag: 'script', content: "window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-GQEC09BG5Z');" },
 			],
 			editLink: {
 				baseUrl: 'https://github.com/peterbenoit/requery/edit/main/docs/',

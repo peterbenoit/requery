@@ -205,4 +205,50 @@ $.fn.rqDestroy = function () {
 	});
 };
 
+// ---------------------------------------------------------------------------
+// $.reQuery.use(pluginFn)
+// Register a plugin. The plugin function receives a context object giving it
+// controlled access to reQuery internals. Plugins are how you add new $.fn.rq*
+// methods without forking or monkey-patching core.
+//
+// Context object:
+//   $              — the jQuery instance reQuery is registered on
+//   getRecord(el)  — returns the internal state record for el (or null)
+//   setState(el, key, value) — write a value and trigger DOM updates
+//   mutateState(el, key, fn) — mutate via callback and trigger DOM updates
+//   addWatcher(el, key, fn)  — register a watcher (same as $.fn.rqWatch)
+//   addComputed(el, key, fn) — register a computed value (same as $.fn.rqComputed)
+//
+// Example:
+//   $.reQuery.use(function({ $, getRecord, setState }) {
+//     $.fn.rqLog = function() {
+//       return this.each(function() {
+//         const rec = getRecord(this);
+//         if (rec) console.log('[reQuery]', rec.data);
+//       });
+//     };
+//   });
+// ---------------------------------------------------------------------------
+$.reQuery = {
+	/**
+	 * Register a plugin with access to reQuery internals.
+	 *
+	 * @param {Function} pluginFn - Called immediately with a context object.
+	 */
+	use(pluginFn) {
+		if (typeof pluginFn !== 'function') {
+			console.warn('reQuery.use: expected a function, got', typeof pluginFn);
+			return;
+		}
+		pluginFn({
+			$,
+			getRecord,
+			setState: (el, key, value) => setState(el, key, value, onUpdate),
+			mutateState: (el, key, fn) => mutateState(el, key, fn, onUpdate),
+			addWatcher,
+			addComputed,
+		});
+	},
+};
+
 export default $;

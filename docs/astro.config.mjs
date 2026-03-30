@@ -89,6 +89,14 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Plugins',
+					items: [
+						{ label: 'Overview', slug: 'plugins/overview' },
+						{ label: 'Creating Plugins', slug: 'plugins/creating-plugins' },
+						{ label: 'rq-validate', slug: 'plugins/rq-validate' },
+					],
+				},
+				{
 					label: 'Project',
 					items: [
 						{ label: 'Changelog', slug: 'project/changelog' },

@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "astro dev",
 		"start": "astro dev",
-		"prebuild": "node -e \"const fs=require('fs'),path=require('path');const src=path.resolve('../guide'),dst=path.resolve('public/guide');fs.rmSync(dst,{recursive:true,force:true});fs.cpSync(src,dst,{recursive:true});\"",
+		"prebuild": "node -e \"const fs=require('fs'),path=require('path');const src=path.resolve('../guide'),dst=path.resolve('public/guide');fs.mkdirSync(dst,{recursive:true});fs.cpSync(src,dst,{recursive:true,force:true});\"",
 		"build": "astro build",
 		"preview": "astro preview",
 		"astro": "astro"

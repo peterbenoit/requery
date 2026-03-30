@@ -1,0 +1,130 @@
+---
+title: Plugin Overview
+description: How the reQuery plugin system works, and what $.reQuery.use() gives you.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import CodePenButton from '../../../components/CodePenButton.astro';
+
+reQuery is designed to stay small. The plugin system is how you (or someone else) adds
+new capabilities without modifying core — you get controlled access to reQuery's internals
+and can register your own `$.fn.rq*` methods just like the built-in ones.
+
+## $.reQuery.use()
+
+```js
+$.reQuery.use(pluginFn)
+```
+
+Call `$.reQuery.use()` with a function. That function runs immediately and receives a
+**context object** with everything it needs to read state, write state, and add new jQuery
+methods. That's the entire API.
+
+```js
+$.reQuery.use(function (ctx) {
+  // ctx gives you:
+  //   ctx.$           — the jQuery instance
+  //   ctx.getRecord   — read the internal state record for an element
+  //   ctx.setState    — write a value + trigger DOM updates
+  //   ctx.mutateState — update via callback + trigger DOM updates
+  //   ctx.addWatcher  — register a watcher for a key
+  //   ctx.addComputed — register a computed value for a key
+
+  ctx.$.fn.rqMyPlugin = function () {
+    return this.each(function () {
+      var rec = ctx.getRecord(this);
+      if (!rec) return;
+      // do something with rec.data ...
+    });
+  };
+});
+```
+
+## Context object reference
+
+| Property | Type | Description |
+|---|---|---|
+| `$` | jQuery | The jQuery instance reQuery is registered on. Add `$.fn` methods here. |
+| `getRecord(el)` | function | Returns the internal state record for a DOM element, or `null` if it has no state. The record has `data`, `initial`, `watchers`, and `computed` properties. |
+| `setState(el, key, value)` | function | Write a state value and trigger DOM updates. Equivalent to calling `.rqSet()` but works directly on a DOM element. |
+| `mutateState(el, key, fn)` | function | Update state via a callback. Equivalent to `.rqMutate()` but element-direct. |
+| `addWatcher(el, key, fn)` | function | Register a watcher. Equivalent to `.rqWatch()` but element-direct. |
+| `addComputed(el, key, fn)` | function | Register a computed value. Equivalent to `.rqComputed()` but element-direct. |
+
+## A minimal example
+
+Here's the simplest possible plugin — `.rqLog()` prints the current state to the console.
+
+```js
+$.reQuery.use(function (ctx) {
+  ctx.$.fn.rqLog = function () {
+    return this.each(function () {
+      var rec = ctx.getRecord(this);
+      if (rec) console.log('[reQuery state]', rec.data);
+    });
+  };
+});
+
+// Use it like any other reQuery method:
+$('#app')
+  .rqState({ count: 0, name: 'hello' })
+  .rqLog();
+// → [reQuery state] { count: 0, name: 'hello' }
+```
+
+<CodePenButton
+  title="reQuery — plugin system: rqLog"
+  html={`<div id="app">
+  <p>Count: <span data-rq-text="count"></span></p>
+  <button id="inc">+1</button>
+  <button id="log">Log to console</button>
+</div>`}
+  js={`$.reQuery.use(function (ctx) {
+  ctx.$.fn.rqLog = function () {
+    return this.each(function () {
+      var rec = ctx.getRecord(this);
+      if (rec) console.log('[reQuery state]', rec.data);
+    });
+  };
+});
+
+$('#app').rqState({ count: 0, name: 'hello' });
+
+$('#inc').on('click', function () {
+  $('#app').rqMutate('count', function (n) { return n + 1; });
+});
+
+$('#log').on('click', function () {
+  $('#app').rqLog(); // open DevTools console to see output
+});`}
+/>
+
+<Aside>
+`$.reQuery.use()` runs the plugin function **immediately and synchronously**. There is no
+deferred registration. Load your plugin after both jQuery and reQuery, then call `use()`
+before you initialize any state.
+</Aside>
+
+## Loading order
+
+```html
+<!-- 1. jQuery -->
+<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+
+<!-- 2. reQuery core -->
+<script src="requery.umd.js"></script>
+
+<!-- 3. Your plugin (after both of the above) -->
+<script src="my-plugin.js"></script>
+
+<!-- 4. Your app code -->
+<script>
+  $('#app').rqState({ ... });
+  $('#app').rqMyPlugin(...);
+</script>
+```
+
+## Next steps
+
+- [Creating Plugins](/plugins/creating-plugins/) — a step-by-step guide to writing your own plugin
+- [rq-validate](/plugins/rq-validate/) — a fully worked example you can use or copy from

@@ -1,0 +1,223 @@
+---
+title: Creating Plugins
+description: A step-by-step guide to writing your own reQuery plugin.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import CodePenButton from '../../../components/CodePenButton.astro';
+
+A reQuery plugin is just a function you pass to `$.reQuery.use()`. It receives a context
+object, and in that function you add new `$.fn.rq*` methods. That's it.
+
+This page walks through building a plugin from scratch — a `rqHistory` plugin that keeps
+a running list of past values for a state key.
+
+## Step by step
+
+<Steps>
+
+1. **Register with `$.reQuery.use()`**
+
+   Wrap everything in a `use()` call so your plugin has access to the context:
+
+   ```js
+   $.reQuery.use(function (ctx) {
+     // your plugin code goes here
+   });
+   ```
+
+2. **Destructure what you need**
+
+   Pull out only the internals your plugin actually uses. This keeps the plugin readable:
+
+   ```js
+   $.reQuery.use(function (ctx) {
+     var $ = ctx.$;
+     var getRecord = ctx.getRecord;
+     var addWatcher = ctx.addWatcher;
+     // ...
+   });
+   ```
+
+3. **Add a `$.fn` method**
+
+   Use `this.each()` and always `return this` so the method is chainable:
+
+   ```js
+   $.reQuery.use(function (ctx) {
+     var $ = ctx.$;
+     var getRecord = ctx.getRecord;
+     var addWatcher = ctx.addWatcher;
+
+     $.fn.rqHistory = function (key, limit) {
+       limit = limit || 10;
+       return this.each(function () {
+         var el = this;
+         var rec = getRecord(el);
+         if (!rec) {
+           console.warn('rqHistory: no rqState found on element', el);
+           return;
+         }
+         // continue...
+       });
+     };
+   });
+   ```
+
+4. **Use `addWatcher` to react to changes**
+
+   Watch the key and push new values onto a history array stored on the element:
+
+   ```js
+   var history = [];
+   $(el).data('rq-history-' + key, history);
+
+   addWatcher(el, key, function (newVal) {
+     history.unshift(newVal);          // newest first
+     if (history.length > limit) history.pop(); // cap size
+   });
+   ```
+
+5. **Add a read method too**
+
+   A companion `rqGetHistory()` to retrieve the history — returns a value, not chainable:
+
+   ```js
+   $.fn.rqGetHistory = function (key) {
+     return $(this[0]).data('rq-history-' + key) || [];
+   };
+   ```
+
+</Steps>
+
+## The complete plugin
+
+Putting it all together:
+
+```js
+$.reQuery.use(function (ctx) {
+  var $ = ctx.$;
+  var getRecord = ctx.getRecord;
+  var addWatcher = ctx.addWatcher;
+
+  $.fn.rqHistory = function (key, limit) {
+    limit = limit || 10;
+    return this.each(function () {
+      var el = this;
+      var rec = getRecord(el);
+      if (!rec) {
+        console.warn('rqHistory: no rqState found on element', el);
+        return;
+      }
+      var history = [];
+      $(el).data('rq-history-' + key, history);
+      addWatcher(el, key, function (newVal) {
+        history.unshift(newVal);
+        if (history.length > limit) history.pop();
+      });
+    });
+  };
+
+  $.fn.rqGetHistory = function (key) {
+    return $(this[0]).data('rq-history-' + key) || [];
+  };
+});
+```
+
+**Usage:**
+
+```js
+$('#app')
+  .rqState({ count: 0 })
+  .rqHistory('count', 5);     // keep last 5 values
+
+$('#app').rqSet('count', 1);
+$('#app').rqSet('count', 2);
+$('#app').rqSet('count', 3);
+
+$('#app').rqGetHistory('count'); // → [3, 2, 1]
+```
+
+<CodePenButton
+  title="reQuery — creating plugins: rqHistory"
+  html={`<div id="app">
+  <p>Count: <span data-rq-text="count"></span></p>
+  <button id="inc">+1</button>
+  <button id="show">Show history</button>
+  <div id="out" style="margin-top:0.5rem;font-family:monospace"></div>
+</div>`}
+  js={`$.reQuery.use(function (ctx) {
+  var $ = ctx.$;
+  var getRecord = ctx.getRecord;
+  var addWatcher = ctx.addWatcher;
+
+  $.fn.rqHistory = function (key, limit) {
+    limit = limit || 10;
+    return this.each(function () {
+      var el = this;
+      var rec = getRecord(el);
+      if (!rec) return;
+      var history = [];
+      $(el).data('rq-history-' + key, history);
+      addWatcher(el, key, function (newVal) {
+        history.unshift(newVal);
+        if (history.length > limit) history.pop();
+      });
+    });
+  };
+
+  $.fn.rqGetHistory = function (key) {
+    return $(this[0]).data('rq-history-' + key) || [];
+  };
+});
+
+$('#app').rqState({ count: 0 }).rqHistory('count', 5);
+
+$('#inc').on('click', function () {
+  $('#app').rqMutate('count', function (n) { return n + 1; });
+});
+
+$('#show').on('click', function () {
+  var h = $('#app').rqGetHistory('count');
+  $('#out').text('History: ' + JSON.stringify(h));
+});`}
+/>
+
+## Rules for well-behaved plugins
+
+**Prefix your method names.** Use something distinctive so you don't accidentally collide
+with core reQuery methods or other plugins. `rqValidate`, `rqUndo`, `rqHistory` — pick
+a clear prefix and stick to it.
+
+**Always check for a state record.** Call `getRecord(el)` first and bail out (with an
+optional `console.warn`) if it returns `null`. Your method may be called on an element
+that doesn't have `rqState` yet.
+
+**Return `this` unless you're returning a value.** All `$.fn` methods should return `this`
+to keep jQuery chains working, unless the point of the method is to return a specific value
+(like a boolean or array).
+
+**Use `setState`, not direct writes to `record.data`.** The context's `setState` triggers
+DOM updates, watchers, and `onChange`. Writing to `record.data` directly skips all of that.
+
+**Namespace your jQuery events.** If your plugin adds event listeners, use
+`.on('click.myplugin', ...)` so they can be cleaned up without disturbing other listeners.
+
+<Aside type="tip">
+Look at the [rq-validate source](https://github.com/peterbenoit/requery/blob/main/src/plugins/rq-validate.js)
+for a complete, real-world example — including UMD wrapping for script-tag + ESM compatibility.
+</Aside>
+
+## Distributing a plugin
+
+If you want others to use your plugin:
+
+1. Wrap it in a UMD wrapper (see `src/plugins/rq-validate.js` for the pattern)
+2. Check for `$.reQuery` at the top and log a clear error if it's missing
+3. Use `npm` or just a plain JS file — reQuery plugins don't need a build step
+
+## See also
+
+- [Plugin Overview](/plugins/overview/)
+- [rq-validate](/plugins/rq-validate/) — a fully worked example
+- [rqWatch()](/api/rq-watch/) — what `addWatcher` does under the hood

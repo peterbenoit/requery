@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="author" content="Peter Benoit" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="reQuery" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:creator" content="@peterbenoit" />
+	<meta name="twitter:site" content="@peterbenoit" />
+	<meta name="color-scheme" content="light dark" />
+	<meta name="referrer" content="strict-origin-when-cross-origin" />
+	<title>Building Plugins — reQuery Guide</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+
+<body>
+
+	<nav class="sidebar">
+		<div class="sidebar-logo">
+			<a href="index.html">reQuery</a>
+			<span class="guide-label">Guide</span>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Getting Started</div>
+			<ul>
+				<li><a href="index.html" class="plain">What is reQuery?</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugin Methods</div>
+			<ul>
+				<li><a href="rqstate.html">.rqState()</a></li>
+				<li><a href="rqget.html">.rqGet()</a></li>
+				<li><a href="rqset.html">.rqSet()</a></li>
+				<li><a href="rqmutate.html">.rqMutate()</a></li>
+				<li><a href="rqwatch.html">.rqWatch()</a></li>
+				<li><a href="rqcomputed.html">.rqComputed()</a></li>
+				<li><a href="rqreset.html">.rqReset()</a></li>
+				<li><a href="rqdestroy.html">.rqDestroy()</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">HTML Attributes</div>
+			<ul>
+				<li><a href="data-rq-text.html">data-rq-text</a></li>
+				<li><a href="data-rq-html.html">data-rq-html</a></li>
+				<li><a href="data-rq-val.html">data-rq-val</a></li>
+				<li><a href="data-rq-attr.html">data-rq-attr-*</a></li>
+				<li><a href="data-rq-class.html">data-rq-class-*</a></li>
+				<li><a href="data-rq-show.html">data-rq-show</a></li>
+				<li><a href="data-rq-each.html">data-rq-each</a></li>
+				<li><a href="data-rq-on.html">data-rq-on-*</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Features</div>
+			<ul>
+				<li><a href="persist.html" class="plain">Saving Data</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Plugins</div>
+			<ul>
+				<li><a href="plugins.html" class="plain active">Building Plugins</a></li>
+				<li><a href="rqvalidate.html" class="plain">rq-validate</a></li>
+			</ul>
+		</div>
+		<div class="sidebar-section">
+			<div class="sidebar-section-title">Author</div>
+			<ul>
+				<li><a href="https://www.peterbenoit.com" class="plain">Peter Benoit</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<main class="content">
+		<div class="page-header">
+			<h1 class="plain-title">Building Plugins</h1>
+			<p class="lead">
+				reQuery is designed to stay small. The plugin system is how you add new capabilities
+				without modifying core — you get controlled access to reQuery's internals and can
+				register your own <code>$.fn.rq*</code> methods just like the built-in ones.
+			</p>
+		</div>
+
+		<h2>How it works</h2>
+		<p>
+			Call <code>$.reQuery.use(fn)</code> with a function. That function runs immediately
+			and receives a context object with everything it needs to read state, write state,
+			and add new jQuery methods. That's the entire API.
+		</p>
+
+		<div class="method-sig">
+			<div><strong>$.reQuery.use</strong>( pluginFn )</div>
+		</div>
+
+		<h2>The context object</h2>
+		<table class="params-table">
+			<thead>
+				<tr>
+					<th>Property</th>
+					<th>Type</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>$</code></td>
+					<td>jQuery</td>
+					<td>The jQuery instance reQuery is registered on. Use this to add <code>$.fn</code> methods.</td>
+				</tr>
+				<tr>
+					<td><code>getRecord(el)</code></td>
+					<td>function</td>
+					<td>Returns the internal state record for a DOM element, or <code>null</code> if it has no state.
+						The record has <code>data</code>, <code>initial</code>, <code>watchers</code>, and
+						<code>computed</code> properties.</td>
+				</tr>
+				<tr>
+					<td><code>setState(el, key, value)</code></td>
+					<td>function</td>
+					<td>Write a state value and trigger DOM updates — same as calling <code>.rqSet()</code> but
+						works directly on a DOM element without a jQuery wrapper.</td>
+				</tr>
+				<tr>
+					<td><code>mutateState(el, key, fn)</code></td>
+					<td>function</td>
+					<td>Update state via a callback — same as <code>.rqMutate()</code> but element-direct.</td>
+				</tr>
+				<tr>
+					<td><code>addWatcher(el, key, fn)</code></td>
+					<td>function</td>
+					<td>Register a watcher for a key — same as <code>.rqWatch()</code> but element-direct.</td>
+				</tr>
+				<tr>
+					<td><code>addComputed(el, key, fn)</code></td>
+					<td>function</td>
+					<td>Register a computed value — same as <code>.rqComputed()</code> but element-direct.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Example 1: minimal plugin -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">1</span>
+				<h3>The simplest possible plugin</h3>
+			</div>
+			<p style="padding: 0 1.5rem 0.5rem">
+				A plugin that adds <code>.rqLog()</code> — prints the current state to the console.
+			</p>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$.reQuery.use(function ({ $, getRecord }) {
+  $.fn.rqLog = function () {
+    return this.each(function () {
+      var rec = getRecord(this);
+      if (rec) console.log('[reQuery state]', rec.data);
+    });
+  };
+});
+
+// Then use it like any other reQuery method:
+$('#app').rqState({ count: 0, name: 'hello' });
+$('#app').rqLog();
+// → [reQuery state] { count: 0, name: 'hello' }</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo — click the button to log state</div>
+				<div id="ex1">
+					<div class="demo-row">
+						<span>Count: <span class="val-display" data-rq-text="count"></span></span>
+						<button id="ex1-inc">+1</button>
+						<button id="ex1-log">Log to console</button>
+					</div>
+					<div class="log-output" id="ex1-out"></div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[1].html, ex[1].js, ex[1].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 2: reading and writing state -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">2</span>
+				<h3>Reading and writing state from a plugin</h3>
+			</div>
+			<p style="padding: 0 1.5rem 0.5rem">
+				Use <code>getRecord</code> to read, <code>setState</code> to write (DOM updates included).
+			</p>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$.reQuery.use(function ({ $, getRecord, setState }) {
+
+  // Reset a single key to its initial value
+  $.fn.rqRevertKey = function (key) {
+    return this.each(function () {
+      var rec = getRecord(this);
+      if (rec && key in rec.initial) {
+        setState(this, key, rec.initial[key]);
+      }
+    });
+  };
+
+});
+
+$('#app').rqState({ score: 100 });
+$('#app').rqSet('score', 999);
+$('#app').rqRevertKey('score');
+// score is 100 again</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo</div>
+				<div id="ex2">
+					<div class="demo-row">
+						<span>Score: <span class="val-display" data-rq-text="score"></span></span>
+						<button id="ex2-change">Set to 999</button>
+						<button id="ex2-revert">Revert to initial</button>
+					</div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[2].html, ex[2].js, ex[2].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<!-- Example 3: watcher-based plugin -->
+		<div class="example">
+			<div class="example-header">
+				<span class="example-num">3</span>
+				<h3>Watching state changes in a plugin</h3>
+			</div>
+			<p style="padding: 0 1.5rem 0.5rem">
+				Use <code>addWatcher</code> to react to state changes — great for side effects like
+				analytics, logging, or syncing to an external service.
+			</p>
+			<div class="code-block">
+				<span class="code-lang">js</span>
+				<pre><code class="language-javascript">$.reQuery.use(function ({ $, addWatcher }) {
+
+  // Track every change to a specific key and keep a history
+  $.fn.rqHistory = function (key, limit) {
+    limit = limit || 10;
+    return this.each(function () {
+      var el = this;
+      var history = [];
+      $(el).data('rq-history-' + key, history);
+
+      addWatcher(el, key, function (newVal) {
+        history.unshift(newVal);
+        if (history.length > limit) history.pop();
+      });
+    });
+  };
+
+  $.fn.rqGetHistory = function (key) {
+    return $(this[0]).data('rq-history-' + key) || [];
+  };
+
+});
+
+$('#app').rqState({ count: 0 }).rqHistory('count', 5);
+// After a few rqSet calls:
+// $('#app').rqGetHistory('count') → [3, 2, 1, 0] (most recent first)</code></pre>
+			</div>
+			<div class="demo-box">
+				<div class="demo-label">Live demo</div>
+				<div id="ex3">
+					<div class="demo-row">
+						<span>Count: <span class="val-display" data-rq-text="count"></span></span>
+						<button id="ex3-inc">+1</button>
+						<button id="ex3-history">Show history</button>
+					</div>
+					<div class="log-output" id="ex3-out"></div>
+				</div>
+			</div>
+			<button class="codepen-btn" onclick="cpSend(ex[3].html, ex[3].js, ex[3].title)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+					<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+				</svg>
+				Open in CodePen
+			</button>
+		</div>
+
+		<h2>Rules for well-behaved plugins</h2>
+		<ul class="prose-list">
+			<li><strong>Prefix your method names.</strong> Use something distinctive so you don't accidentally
+				collide with core reQuery methods or other plugins. <code>rqValidate</code>, <code>rqUndo</code>,
+				<code>rqSync</code> — pick a clear prefix and stick to it.</li>
+			<li><strong>Always check for a state record.</strong> Call <code>getRecord(el)</code> first and
+				bail out (with an optional <code>console.warn</code>) if it returns <code>null</code>. Your method
+				may be called on an element that doesn't have <code>rqState</code> yet.</li>
+			<li><strong>Return <code>this</code> unless you're returning a value.</strong> All <code>$.fn</code>
+				methods should return <code>this</code> to keep jQuery chains working, unless the point of the
+				method is to return a specific value (like a boolean or string).</li>
+			<li><strong>Use <code>setState</code>, not direct writes to <code>record.data</code>.</strong> The
+				context's <code>setState</code> triggers DOM updates, watchers, and <code>onChange</code>.
+				Writing to <code>record.data</code> directly skips all of that.</li>
+			<li><strong>Namespace your jQuery events.</strong> If your plugin adds event listeners, use
+				<code>.on('click.myplugin', ...)</code> so they can be cleaned up cleanly.</li>
+		</ul>
+
+		<div class="see-also">
+			<div class="see-also-label">See also</div>
+			<div class="links">
+				<a href="rqvalidate.html">rq-validate (sample plugin)</a>
+				<a href="rqwatch.html">.rqWatch()</a>
+				<a href="rqstate.html">.rqState()</a>
+			</div>
+		</div>
+	</main>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+	<script src="../dist/requery.umd.js"></script>
+	<script>
+		if (typeof $.fn === 'undefined' || !$.fn.rqState) {
+			document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"><\/scr' + 'ipt>');
+		}
+	</script>
+	<script>
+		hljs.highlightAll();
+
+		// ── Plugin 1: rqLog
+		$.reQuery.use(function (ctx) {
+			ctx.$.fn.rqLog = function () {
+				return this.each(function () {
+					var rec = ctx.getRecord(this);
+					if (rec) return rec.data;
+				});
+			};
+		});
+
+		// ── Demo 1
+		$('#ex1').rqState({ count: 0, name: 'hello' });
+		$('#ex1-inc').on('click', function () {
+			$('#ex1').rqMutate('count', function (n) { return n + 1; });
+		});
+		$('#ex1-log').on('click', function () {
+			var state = JSON.stringify($('#ex1').rqLog() || $('[data-rq-text]').closest('#ex1').rqGet());
+			var fullState = JSON.stringify($('#ex1').rqGet());
+			$('#ex1-out').html('<p><code>' + fullState + '</code></p>');
+		});
+
+		// ── Plugin 2: rqRevertKey
+		$.reQuery.use(function (ctx) {
+			ctx.$.fn.rqRevertKey = function (key) {
+				return this.each(function () {
+					var rec = ctx.getRecord(this);
+					if (rec && key in rec.initial) {
+						ctx.setState(this, key, rec.initial[key]);
+					}
+				});
+			};
+		});
+
+		// ── Demo 2
+		$('#ex2').rqState({ score: 100 });
+		$('#ex2-change').on('click', function () { $('#ex2').rqSet('score', 999); });
+		$('#ex2-revert').on('click', function () { $('#ex2').rqRevertKey('score'); });
+
+		// ── Plugin 3: rqHistory
+		$.reQuery.use(function (ctx) {
+			ctx.$.fn.rqHistory = function (key, limit) {
+				limit = limit || 10;
+				return this.each(function () {
+					var el = this;
+					var history = [];
+					$(el).data('rq-history-' + key, history);
+					ctx.addWatcher(el, key, function (newVal) {
+						history.unshift(newVal);
+						if (history.length > limit) history.pop();
+					});
+				});
+			};
+			ctx.$.fn.rqGetHistory = function (key) {
+				return $(this[0]).data('rq-history-' + key) || [];
+			};
+		});
+
+		// ── Demo 3
+		$('#ex3').rqState({ count: 0 }).rqHistory('count', 5);
+		$('#ex3-inc').on('click', function () {
+			$('#ex3').rqMutate('count', function (n) { return n + 1; });
+		});
+		$('#ex3-history').on('click', function () {
+			var h = $('#ex3').rqGetHistory('count');
+			$('#ex3-out').html('<p>History (newest first): <code>[' + h.join(', ') + ']</code></p>');
+		});
+
+		// ── CodePen
+		var ex = {
+			1: {
+				title: 'reQuery — Building Plugins: rqLog',
+				html: '<div id="app">\n  <p>Count: <span data-rq-text="count"></span></p>\n  <button id="inc">+1</button>\n  <button id="log">Log to console</button>\n</div>',
+				js: '$.reQuery.use(function (ctx) {\n  ctx.$.fn.rqLog = function () {\n    return this.each(function () {\n      var rec = ctx.getRecord(this);\n      if (rec) console.log(\'[reQuery state]\', rec.data);\n    });\n  };\n});\n\n$(\'#app\').rqState({ count: 0, name: \'hello\' });\n$(\'#inc\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'count\', function (n) { return n + 1; });\n});\n$(\'#log\').on(\'click\', function () {\n  $(\'#app\').rqLog();\n});'
+			},
+			2: {
+				title: 'reQuery — Building Plugins: rqRevertKey',
+				html: '<div id="app">\n  <p>Score: <span data-rq-text="score"></span></p>\n  <button id="change">Set to 999</button>\n  <button id="revert">Revert to initial</button>\n</div>',
+				js: '$.reQuery.use(function (ctx) {\n  ctx.$.fn.rqRevertKey = function (key) {\n    return this.each(function () {\n      var rec = ctx.getRecord(this);\n      if (rec && key in rec.initial) {\n        ctx.setState(this, key, rec.initial[key]);\n      }\n    });\n  };\n});\n\n$(\'#app\').rqState({ score: 100 });\n$(\'#change\').on(\'click\', function () { $(\'#app\').rqSet(\'score\', 999); });\n$(\'#revert\').on(\'click\', function () { $(\'#app\').rqRevertKey(\'score\'); });'
+			},
+			3: {
+				title: 'reQuery — Building Plugins: rqHistory',
+				html: '<div id="app">\n  <p>Count: <span data-rq-text="count"></span></p>\n  <button id="inc">+1</button>\n  <button id="history">Show history</button>\n  <div id="out"></div>\n</div>',
+				js: '$.reQuery.use(function (ctx) {\n  ctx.$.fn.rqHistory = function (key, limit) {\n    limit = limit || 10;\n    return this.each(function () {\n      var el = this;\n      var history = [];\n      $(el).data(\'rq-history-\' + key, history);\n      ctx.addWatcher(el, key, function (newVal) {\n        history.unshift(newVal);\n        if (history.length > limit) history.pop();\n      });\n    });\n  };\n  ctx.$.fn.rqGetHistory = function (key) {\n    return $(this[0]).data(\'rq-history-\' + key) || [];\n  };\n});\n\n$(\'#app\').rqState({ count: 0 }).rqHistory(\'count\', 5);\n$(\'#inc\').on(\'click\', function () {\n  $(\'#app\').rqMutate(\'count\', function (n) { return n + 1; });\n});\n$(\'#history\').on(\'click\', function () {\n  var h = $(\'#app\').rqGetHistory(\'count\');\n  $(\'#out\').html(\'History: \' + JSON.stringify(h));\n});'
+			}
+		};
+
+		function cpSend(html, js, title) {
+			var data = JSON.stringify({
+				title: title || 'reQuery Plugin Example',
+				html: html, js: js,
+				js_external: 'https://code.jquery.com/jquery-4.0.0.min.js;https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js'
+			});
+			var f = document.createElement('form');
+			f.action = 'https://codepen.io/pen/define';
+			f.method = 'POST'; f.target = '_blank';
+			var i = document.createElement('input');
+			i.type = 'hidden'; i.name = 'data'; i.value = data;
+			f.appendChild(i);
+			document.body.appendChild(f);
+			f.submit();
+			f.remove();
+		}
+	</script>
+</body>
+
+</html>

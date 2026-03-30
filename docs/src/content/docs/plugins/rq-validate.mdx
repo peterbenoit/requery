@@ -1,0 +1,276 @@
+---
+title: rq-validate
+description: A form validation plugin for reQuery. Write a rule per field, read errors from state.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import CodePenButton from '../../../components/CodePenButton.astro';
+
+`rq-validate` is a form validation plugin for reQuery. Write a rule for each field — a
+function that returns an error message or `null`. Errors land in state under `_errors`
+so the rest of reQuery's binding system can display them.
+
+## Loading
+
+```html
+<!-- Load jQuery, then reQuery, then the plugin -->
+<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/peterbenoit/requery@main/dist/requery.umd.js"></script>
+<script src="rq-validate.js"></script>
+```
+
+[Source on GitHub](https://github.com/peterbenoit/requery/blob/main/src/plugins/rq-validate.js) — copy it into your project or serve it directly.
+
+## Methods added
+
+```ts
+$.fn.rqValidate(rules: object, opts?: object): this
+$.fn.rqIsValid(): boolean
+```
+
+**`rqValidate`** is chainable. **`rqIsValid`** returns a boolean — not chainable.
+
+### Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `rules` | `object` | Keys match your state keys. Each value is `(value, allState) => string \| null`. Return an error string when invalid, `null` when valid. |
+| `opts.validateOn` | `string` | `'change'` (default), `'blur'`, or `'submit'`. Controls when rules run. |
+| `opts.onValid` | `function` | Called whenever all fields become error-free. Receives a state snapshot. |
+| `opts.onInvalid` | `function` | Called whenever any field has an error. Receives `(errors, stateSnapshot)`. |
+
+## How errors work
+
+After `rqValidate` runs, errors are stored in state under `_errors` as a plain object:
+
+```js
+{ name: null, email: 'Enter a valid email address' }
+```
+
+`null` means the field passed. You read errors the same way you read any other state —
+via `rqWatch('_errors', fn)` or `rqGet('_errors')`.
+
+## Examples
+
+### Basic form
+
+```html
+<div id="form">
+  <div>
+    <input type="text" data-rq-val="name" placeholder="Your name" />
+    <span id="name-error"></span>
+  </div>
+  <div>
+    <input type="text" data-rq-val="email" placeholder="Email address" />
+    <span id="email-error"></span>
+  </div>
+  <button id="submit">Submit</button>
+</div>
+```
+
+```js
+$('#form')
+  .rqState({ name: '', email: '' })
+  .rqValidate({
+    name:  function (val) { return val.trim().length < 2 ? 'Name must be at least 2 characters' : null; },
+    email: function (val) { return !val.includes('@') ? 'Enter a valid email address' : null; },
+  });
+
+// Show errors in the DOM via a watcher
+$('#form').rqWatch('_errors', function (errors) {
+  $('#name-error').text(errors.name || '');
+  $('#email-error').text(errors.email || '');
+});
+
+// Check before submitting
+$('#submit').on('click', function () {
+  if ($('#form').rqIsValid()) {
+    // all good, send the data
+    console.log($('#form').rqGet());
+  }
+});
+```
+
+<CodePenButton
+  title="reQuery rq-validate — basic form"
+  html={`<div id="form">
+  <div>
+    <input type="text" data-rq-val="name" placeholder="Your name" />
+    <div id="name-err" style="color:red;font-size:0.8em;min-height:1.2em"></div>
+  </div>
+  <div>
+    <input type="text" data-rq-val="email" placeholder="Email address" />
+    <div id="email-err" style="color:red;font-size:0.8em;min-height:1.2em"></div>
+  </div>
+  <button id="submit">Submit</button>
+  <span id="result" style="margin-left:0.5em;color:green"></span>
+</div>`}
+  js={`// rq-validate plugin (inline for CodePen)
+$.reQuery.use(function (ctx) {
+  var $ = ctx.$, getRecord = ctx.getRecord, setState = ctx.setState, addWatcher = ctx.addWatcher;
+  function runRules(data, rules) {
+    var e = {}; Object.keys(rules).forEach(function(k){ e[k]=rules[k](data[k],data)||null; }); return e;
+  }
+  function allValid(e) { return Object.values(e).every(function(v){return v===null;}); }
+  $.fn.rqValidate = function (rules, opts) {
+    opts = opts || {}; var von = opts.validateOn||'change';
+    return this.each(function () {
+      var el=this, rec=getRecord(el); if(!rec) return;
+      var init={}; Object.keys(rules).forEach(function(k){init[k]=null;}); setState(el,'_errors',init);
+      function validate(){ var e=runRules(rec.data,rules),cur=rec.data['_errors']||{},ch=Object.keys(e).some(function(k){return e[k]!==cur[k];}); if(ch)setState(el,'_errors',e); if(allValid(e)){if(opts.onValid)opts.onValid(rec.data);}else{if(opts.onInvalid)opts.onInvalid(e,rec.data);} }
+      if(von==='change'){Object.keys(rules).forEach(function(k){addWatcher(el,k,validate);});}
+      else if(von==='blur'){$(el).on('blur.rqv','[data-rq-val]',function(){if(rules[this.getAttribute('data-rq-val')])validate();});}
+    });
+  };
+  $.fn.rqIsValid = function () { var el=this[0],rec=getRecord(el); if(!rec) return false; var e=rec.data['_errors']; return e&&allValid(e); };
+});
+
+$('#form')
+  .rqState({ name: '', email: '' })
+  .rqValidate({
+    name:  function (val) { return val.trim().length < 2 ? 'Name must be at least 2 characters' : null; },
+    email: function (val) { return !val.includes('@') ? 'Enter a valid email address' : null; }
+  });
+$('#form').rqWatch('_errors', function (errors) {
+  $('#name-err').text(errors.name || '');
+  $('#email-err').text(errors.email || '');
+});
+$('#submit').on('click', function () {
+  if ($('#form').rqIsValid()) { $('#result').text('✓ Submitted!'); }
+  else { $('#result').css('color','red').text('Fix errors above'); }
+});`}
+/>
+
+### Validate on blur
+
+Pass `validateOn: 'blur'` to only show errors after the user has left a field — less
+noisy than validating on every keystroke.
+
+```js
+$('#form')
+  .rqState({ username: '', password: '' })
+  .rqValidate({
+    username: function (val) { return val.length < 3 ? 'At least 3 characters required' : null; },
+    password: function (val) { return val.length < 8 ? 'At least 8 characters required' : null; },
+  }, { validateOn: 'blur' });
+```
+
+<CodePenButton
+  title="reQuery rq-validate — blur mode"
+  html={`<div id="form">
+  <div>
+    <input type="text" data-rq-val="username" placeholder="Username (3+ chars)" />
+    <div id="user-err" style="color:red;font-size:0.8em;min-height:1.2em"></div>
+  </div>
+  <div>
+    <input type="password" data-rq-val="password" placeholder="Password (8+ chars)" />
+    <div id="pass-err" style="color:red;font-size:0.8em;min-height:1.2em"></div>
+  </div>
+</div>`}
+  js={`// rq-validate plugin (inline for CodePen)
+$.reQuery.use(function (ctx) {
+  var $ = ctx.$, getRecord = ctx.getRecord, setState = ctx.setState, addWatcher = ctx.addWatcher;
+  function runRules(data, rules) {
+    var e = {}; Object.keys(rules).forEach(function(k){ e[k]=rules[k](data[k],data)||null; }); return e;
+  }
+  function allValid(e) { return Object.values(e).every(function(v){return v===null;}); }
+  $.fn.rqValidate = function (rules, opts) {
+    opts = opts || {}; var von = opts.validateOn||'change';
+    return this.each(function () {
+      var el=this, rec=getRecord(el); if(!rec) return;
+      var init={}; Object.keys(rules).forEach(function(k){init[k]=null;}); setState(el,'_errors',init);
+      function validate(){ var e=runRules(rec.data,rules),cur=rec.data['_errors']||{},ch=Object.keys(e).some(function(k){return e[k]!==cur[k];}); if(ch)setState(el,'_errors',e); }
+      if(von==='change'){Object.keys(rules).forEach(function(k){addWatcher(el,k,validate);});}
+      else if(von==='blur'){$(el).on('blur.rqv','[data-rq-val]',function(){if(rules[this.getAttribute('data-rq-val')])validate();});}
+    });
+  };
+  $.fn.rqIsValid = function () { var el=this[0],rec=getRecord(el); if(!rec) return false; var e=rec.data['_errors']; return e&&allValid(e); };
+});
+
+$('#form')
+  .rqState({ username: '', password: '' })
+  .rqValidate({
+    username: function (val) { return val.length < 3 ? 'At least 3 characters required' : null; },
+    password: function (val) { return val.length < 8 ? 'At least 8 characters required' : null; }
+  }, { validateOn: 'blur' });
+$('#form').rqWatch('_errors', function (errors) {
+  $('#user-err').text(errors.username || '');
+  $('#pass-err').text(errors.password || '');
+});`}
+/>
+
+### Cross-field validation
+
+Each rule receives the full state as its second argument, so you can validate one field
+against another:
+
+```js
+$('#form')
+  .rqState({ password: '', confirm: '' })
+  .rqValidate({
+    password: function (val) { return val.length < 8 ? 'At least 8 characters required' : null; },
+    confirm:  function (val, state) { return val !== state.password ? 'Passwords do not match' : null; },
+  });
+```
+
+<CodePenButton
+  title="reQuery rq-validate — cross-field validation"
+  html={`<div id="form">
+  <div>
+    <input type="password" data-rq-val="password" placeholder="Password" />
+    <div id="pw-err" style="color:red;font-size:0.8em;min-height:1.2em"></div>
+  </div>
+  <div>
+    <input type="password" data-rq-val="confirm" placeholder="Confirm password" />
+    <div id="conf-err" style="color:red;font-size:0.8em;min-height:1.2em"></div>
+  </div>
+  <div id="ok" style="color:green;min-height:1.2em"></div>
+</div>`}
+  js={`// rq-validate plugin (inline for CodePen)
+$.reQuery.use(function (ctx) {
+  var $ = ctx.$, getRecord = ctx.getRecord, setState = ctx.setState, addWatcher = ctx.addWatcher;
+  function runRules(data, rules) {
+    var e = {}; Object.keys(rules).forEach(function(k){ e[k]=rules[k](data[k],data)||null; }); return e;
+  }
+  function allValid(e) { return Object.values(e).every(function(v){return v===null;}); }
+  $.fn.rqValidate = function (rules, opts) {
+    opts = opts || {}; var von = opts.validateOn||'change';
+    return this.each(function () {
+      var el=this, rec=getRecord(el); if(!rec) return;
+      var init={}; Object.keys(rules).forEach(function(k){init[k]=null;}); setState(el,'_errors',init);
+      function validate(){ var e=runRules(rec.data,rules),cur=rec.data['_errors']||{},ch=Object.keys(e).some(function(k){return e[k]!==cur[k];}); if(ch)setState(el,'_errors',e); if(allValid(e)){if(opts.onValid)opts.onValid(rec.data);}else{if(opts.onInvalid)opts.onInvalid(e,rec.data);} }
+      if(von==='change'){Object.keys(rules).forEach(function(k){addWatcher(el,k,validate);});}
+    });
+  };
+  $.fn.rqIsValid = function () { var el=this[0],rec=getRecord(el); if(!rec) return false; var e=rec.data['_errors']; return e&&allValid(e); };
+});
+
+$('#form')
+  .rqState({ password: '', confirm: '' })
+  .rqValidate({
+    password: function (val) { return val.length < 8 ? 'At least 8 characters required' : null; },
+    confirm:  function (val, state) { return val !== state.password ? 'Passwords do not match' : null; }
+  }, {
+    onValid:   function () { $('#ok').text('✓ Passwords match'); },
+    onInvalid: function () { $('#ok').text(''); }
+  });
+$('#form').rqWatch('_errors', function (errors) {
+  $('#pw-err').text(errors.password || '');
+  $('#conf-err').text(errors.confirm || '');
+});`}
+/>
+
+## Notes
+
+- Rules run on every change by default. For large forms, `validateOn: 'blur'` is usually
+  a better experience.
+- `_errors` is a reserved key — don't use it for your own state.
+- `rqIsValid()` checks whatever is currently in `_errors`. If `validateOn` is `'blur'`
+  or `'submit'`, errors may not be populated yet when you call it. Force a check first
+  by calling your watcher or using `onInvalid` to gate the submit.
+
+## See also
+
+- [Plugin Overview](/plugins/overview/)
+- [Creating Plugins](/plugins/creating-plugins/)
+- [rqWatch()](/api/rq-watch/)

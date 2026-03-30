@@ -74,7 +74,8 @@ honor them:
 
 ## API Naming Convention
 
-All jQuery plugin methods use the `rq` prefix on `$.fn`:
+All jQuery plugin methods use the `rq` prefix on `$.fn`. There is also one top-level
+namespace object on `$` itself for the plugin system:
 
 | Method | Purpose |
 |--------|---------|
@@ -84,6 +85,9 @@ All jQuery plugin methods use the `rq` prefix on `$.fn`:
 | `$.fn.rqMutate(key, fn)` | Update state via callback (safe for objects/arrays) |
 | `$.fn.rqWatch(key, fn)` | Watch a key for changes |
 | `$.fn.rqComputed(key, fn)` | Define a derived value |
+| `$.fn.rqReset(key?)` | Reset to initial values |
+| `$.fn.rqDestroy()` | Remove all state and unbind listeners |
+| `$.reQuery.use(pluginFn)` | Register a plugin with access to core internals |
 
 DOM binding attributes:
 
@@ -105,33 +109,39 @@ DOM binding attributes:
 ```
 src/
   core/
-    state.js      ← WeakMap store, rqState/rqGet/rqSet/rqMutate
-    binding.js    ← data-rq-* DOM binding engine
-    watch.js      ← rqWatch + rqComputed
-    lists.js      ← data-rq-each list rendering
-    events.js     ← data-rq-on-* declarative events
-  requery.js      ← assembles and registers $.fn.rq* methods
+    state.js        ← WeakMap store, rqState/rqGet/rqSet/rqMutate
+    binding.js      ← data-rq-* DOM binding engine
+    watch.js        ← rqWatch + rqComputed
+    lists.js        ← data-rq-each list rendering
+    events.js       ← data-rq-on-* declarative events
+  plugins/
+    rq-validate.js  ← sample plugin / reference implementation for plugin authors
+  requery.js        ← assembles $.fn.rq* methods + $.reQuery.use() plugin API
 dist/
   requery.esm.js
   requery.umd.js
 test/
   *.test.js
-examples/
-  *.html          ← plain HTML, no build step, CDN jQuery 4
+guide/
+  *.html            ← plain HTML demos with live examples and Open in CodePen
+  style.css
+docs/
+  src/content/docs/ ← Astro Starlight source (deployed to requeryjs.com)
 ```
 
 ---
 
 ## Development Phases
 
-Work through phases in order. Do not implement a later phase if an earlier one is
-incomplete or untested.
+All phases are complete. When adding new features, treat each phase as a stable
+foundation — do not change a phase's public API without updating its tests and docs.
 
-1. **Phase 1 — State Core** (`src/core/state.js`)
-2. **Phase 2 — DOM Binding** (`src/core/binding.js`)
-3. **Phase 3 — Watch & Computed** (`src/core/watch.js`)
-4. **Phase 4 — Lists** (`src/core/lists.js`)
-5. **Phase 5 — Declarative Events** (`src/core/events.js`)
+1. **Phase 1 — State Core** (`src/core/state.js`) ✓
+2. **Phase 2 — DOM Binding** (`src/core/binding.js`) ✓
+3. **Phase 3 — Watch & Computed** (`src/core/watch.js`) ✓
+4. **Phase 4 — Lists** (`src/core/lists.js`) ✓
+5. **Phase 5 — Declarative Events** (`src/core/events.js`) ✓
+6. **Phase 6 — Plugin System** (`$.reQuery.use()` in `src/requery.js`) ✓
 
 ---
 
@@ -150,6 +160,11 @@ Do not suggest or implement the following unless the user explicitly requests th
 This is a core user need — beginners absolutely expect data to survive a page reload.
 Do not suggest they "just use onChange and write their own persistence layer" — that
 defeats the purpose. The option exists; use it.
+
+**The plugin system is IN scope.** `$.reQuery.use(fn)` is how third-party capabilities
+are added without modifying core. The reference implementation is `src/plugins/rq-validate.js`.
+New plugins belong in `src/plugins/` and must have a corresponding guide page in `guide/`
+and docs page in `docs/src/content/docs/plugins/`.
 
 ---
 
@@ -179,16 +194,46 @@ npm run dev      # watch mode
 ## Testing
 
 - One test file per source module (e.g., `test/state.test.js`)
+- Plugin test files live in `test/` alongside core tests (e.g., `test/plugins.test.js`)
 - Tests use happy-dom (in Vitest config) for DOM simulation
 - Each test should be independent — no shared mutable state between tests
 - Test the public `$.fn.rq*` API, not internal WeakMap internals directly
+- For plugins: test both the registration API (`$.reQuery.use`) and the `$.fn` methods it adds
 
 ---
 
-## Examples
+## Plugin System
 
-Every feature must have a corresponding plain HTML file in `examples/`. These files:
+`$.reQuery.use(pluginFn)` is registered in `src/requery.js` alongside the core methods.
+It calls `pluginFn` immediately with a context object:
+
+| Context property | Type | Description |
+|---|---|---|
+| `$` | jQuery | The jQuery instance — add `$.fn` methods here |
+| `getRecord(el)` | function | Returns the internal state record (or null) |
+| `setState(el, key, value)` | function | Write state + trigger DOM updates |
+| `mutateState(el, key, fn)` | function | Update state via callback + trigger DOM updates |
+| `addWatcher(el, key, fn)` | function | Register a watcher (same as `$.fn.rqWatch`) |
+| `addComputed(el, key, fn)` | function | Register a computed value (same as `$.fn.rqComputed`) |
+
+**Rules for plugins:**
+- Always check `getRecord(el)` — return/warn if null (element has no state)
+- Return `this` from all `$.fn` methods unless returning a value
+- Use `setState` not direct `record.data` writes — the former triggers DOM updates
+- Namespace jQuery event listeners (`.on('click.myplugin', ...)`)
+- The reference implementation is `src/plugins/rq-validate.js`
+
+---
+
+## Guide & Docs
+
+Every feature must have a corresponding plain HTML file in `guide/`. These files:
 - Load jQuery 4 from CDN
 - Load `dist/requery.umd.js` via a relative `<script>` tag
 - Require no build step to run
-- Serve as the primary documentation for end users
+- Include live demos with Open in CodePen buttons
+
+Plugin pages also need:
+- A guide page at `guide/[pluginname].html`
+- A docs page at `docs/src/content/docs/plugins/[pluginname].mdx`
+- An entry in the sidebar in `docs/astro.config.mjs`

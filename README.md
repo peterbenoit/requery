@@ -301,13 +301,45 @@ Actions receive `(currentState, event, $rootEl)` and return a partial state upda
 
 ---
 
+## Plugins
+
+reQuery has a lightweight plugin system. Plugins add new `$.fn.rq*` methods without
+modifying core — they get controlled access to reQuery's internals via `$.reQuery.use()`.
+
+```js
+$.reQuery.use(function (ctx) {
+  // ctx gives you: $, getRecord, setState, mutateState, addWatcher, addComputed
+
+  ctx.$.fn.rqLog = function () {
+    return this.each(function () {
+      var rec = ctx.getRecord(this);
+      if (rec) console.log('[state]', rec.data);
+    });
+  };
+});
+
+// Then use it like any built-in method:
+$('#app').rqState({ count: 0 }).rqLog();
+```
+
+Load order: jQuery → reQuery → your plugin → your app code.
+
+The repo includes `src/plugins/rq-validate.js` — a form validation plugin that serves as
+both a working utility and a reference implementation for plugin authors.
+
+See the [Plugin docs](https://requeryjs.com/plugins/overview/) for the full API and a step-by-step guide.
+
+---
+
 ## Examples
 
-Open any file in `examples/` directly in a browser — no build step needed.
+Open any file in `guide/` directly in a browser — no build step needed.
 
 | File | Covers |
 |------|--------|
-| [`phase1-2-state-binding.html`](examples/phase1-2-state-binding.html) | State, binding, two-way inputs, show/hide, classes, computed, watch |
+| [`guide/rqstate.html`](guide/rqstate.html) | rqState, onChange, onInit, debug |
+| [`guide/rqvalidate.html`](guide/rqvalidate.html) | rq-validate plugin, blur mode, cross-field rules |
+| [`guide/plugins.html`](guide/plugins.html) | Building plugins: rqLog, rqRevertKey, rqHistory |
 
 ---
 
@@ -329,15 +361,18 @@ npm run dev        # → build in watch mode
 ```
 src/
   core/
-    state.js      ← Phase 1: WeakMap state engine
-    binding.js    ← Phase 2: data-rq-* DOM binding
-    watch.js      ← Phase 3: rqWatch + rqComputed  (reserved)
-    lists.js      ← Phase 4: data-rq-each
-    events.js     ← Phase 5: data-rq-on-* actions
-  requery.js      ← entry point, assembles $.fn.rq* methods
-dist/             ← built output (committed for CDN use)
-test/             ← Vitest tests, one file per module
-examples/         ← plain HTML demos
+    state.js        ← Phase 1: WeakMap state engine
+    binding.js      ← Phase 2: data-rq-* DOM binding
+    watch.js        ← Phase 3: rqWatch + rqComputed
+    lists.js        ← Phase 4: data-rq-each
+    events.js       ← Phase 5: data-rq-on-* actions
+  plugins/
+    rq-validate.js  ← sample plugin / reference implementation
+  requery.js        ← entry point; assembles $.fn.rq* + $.reQuery.use()
+dist/               ← built output (committed for CDN use)
+test/               ← Vitest tests, one file per module
+guide/              ← plain HTML demos with live examples and Open in CodePen
+docs/               ← Astro Starlight docs site (deployed to requeryjs.com)
 ```
 
 ### Testing

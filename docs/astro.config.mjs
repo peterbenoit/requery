@@ -7,6 +7,9 @@ export default defineConfig({
 	site: 'https://requeryjs.com/',
 	integrations: [
 		starlight({
+			components: {
+				Footer: './src/components/Footer.astro',
+			},
 			title: 'reQuery',
 			description: 'A jQuery 4 plugin for reactive state and declarative DOM binding.',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/peterbenoit/requery' }],
@@ -44,9 +47,6 @@ export default defineConfig({
 						defer: true,
 					},
 				},
-				// Google Analytics
-				{ tag: 'script', attrs: { src: 'https://www.googletagmanager.com/gtag/js?id=G-GQEC09BG5Z', async: true } },
-				{ tag: 'script', content: "window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-GQEC09BG5Z');" },
 			],
 			editLink: {
 				baseUrl: 'https://github.com/peterbenoit/requery/edit/main/docs/',

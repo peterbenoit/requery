@@ -1,0 +1,32 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import StarlightFooter from '@astrojs/starlight/components/Footer.astro';
+---
+
+<StarlightFooter {...Astro.props} />
+
+<div class="author-credit">
+  <p>
+    Built by <a href="https://peterbenoit.com" target="_blank" rel="noopener noreferrer">Peter Benoit</a>
+    &nbsp;·&nbsp;
+    <a href="https://peterbenoit.com/requery/" target="_blank" rel="noopener noreferrer">Portfolio page</a>
+  </p>
+</div>
+
+<style>
+  .author-credit {
+    text-align: center;
+    padding: 0.25rem 1rem 1.25rem;
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-4);
+  }
+
+  .author-credit a {
+    color: var(--sl-color-accent-high);
+    text-decoration: none;
+  }
+
+  .author-credit a:hover {
+    text-decoration: underline;
+  }
+</style>
